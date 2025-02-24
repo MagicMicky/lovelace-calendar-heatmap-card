@@ -1,4 +1,4 @@
-const CARD_VERSION = "1.0.5";
+const CARD_VERSION = "1.0.6";
 
 class CalendarHeatmapCard extends HTMLElement {
   constructor() {
@@ -17,23 +17,21 @@ class CalendarHeatmapCard extends HTMLElement {
       title: "Game Activity",
       days_to_show: 365,
       ignored_states: ["unknown", "idle", "offline", ""],
-      refresh_interval: 5 * 60, // in seconds (5 minutes)
+      refresh_interval: 5 * 60, // seconds
       ...config,
     };
   }
 
   set hass(hass) {
-    // Only store the hass object; do not re-render on every hass update.
+    // Store the hass object; do not trigger render on every update.
     this._hass = hass;
   }
 
-  // Approximate size for Home Assistant to compute layout
   getCardSize() {
-    return 5;
+    return 6;
   }
 
   connectedCallback() {
-    // If this is the first time being attached, do the initial render.
     if (!this._hasConnected) {
       this._hasConnected = true;
       this._update();
@@ -42,7 +40,6 @@ class CalendarHeatmapCard extends HTMLElement {
         this._interval = setInterval(() => this._update(), intervalMs);
       }
     } else {
-      // If already connected before, but no interval is running, restart it.
       if (!this._interval) {
         const intervalMs = this._config.refresh_interval * 1000;
         if (intervalMs > 0) {
@@ -53,12 +50,11 @@ class CalendarHeatmapCard extends HTMLElement {
   }
 
   disconnectedCallback() {
-    // Clear the interval so that we don't keep updating while off-screen.
     if (this._interval) {
       clearInterval(this._interval);
       this._interval = null;
     }
-    // Notice: we do NOT reset _hasConnected here so that re-attachment does not trigger a full re-render.
+    // Do not reset _hasConnected so we avoid duplicate renders on reattachment.
   }
 
   async _fetchHistory() {
@@ -69,9 +65,7 @@ class CalendarHeatmapCard extends HTMLElement {
     );
     const startISOString = start.toISOString();
     const endISOString = now.toISOString();
-
     try {
-      // callApi automatically prefixes "/api", so we don't include it ourselves
       const history = await this._hass.callApi(
         "GET",
         `history/period/${startISOString}?filter_entity_id=${this._config.entity}&end_time=${endISOString}`
@@ -85,21 +79,30 @@ class CalendarHeatmapCard extends HTMLElement {
 
   async _update() {
     if (!this._hass) return;
-    // Clear existing content
     this.shadowRoot.innerHTML = "";
 
-    // Create the ha-card so it inherits Home Assistant styling
+    // Create ha-card for standard theming.
     const card = document.createElement("ha-card");
     card.header = this._config.title || "Calendar Heatmap";
 
-    // Container for card content
+    // Main container
     const container = document.createElement("div");
     container.classList.add("card-content");
     container.style.padding = "16px";
     container.style.display = "flex";
     container.style.flexDirection = "column";
 
-    // Fetch history data
+    // Use CSS variables from theme if available.
+    const style = getComputedStyle(this);
+    const colors = [
+      style.getPropertyValue("--calendar-heatmap-no-data-color").trim() || "#ebedf0",
+      style.getPropertyValue("--calendar-heatmap-level-1").trim() || "#c6e48b",
+      style.getPropertyValue("--calendar-heatmap-level-2").trim() || "#7bc96f",
+      style.getPropertyValue("--calendar-heatmap-level-3").trim() || "#239a3b",
+      style.getPropertyValue("--calendar-heatmap-level-4").trim() || "#196127",
+    ];
+
+    // Fetch sensor history and process data.
     const historyData = await this._fetchHistory();
     let dailyTotals = {};
     if (historyData && historyData[0]) {
@@ -123,107 +126,169 @@ class CalendarHeatmapCard extends HTMLElement {
       }
     }
 
-    // Build weeks from earliest Sunday to now (GitHub style)
+    // Build weeks array (each week is an array of days) from earliest Sunday to today.
     const now = new Date();
     let startDate = new Date(
       now.getTime() - this._config.days_to_show * 24 * 60 * 60 * 1000
     );
     const dayOfWeek = startDate.getDay();
     startDate.setDate(startDate.getDate() - dayOfWeek);
-
     const weeks = [];
     const currentDate = new Date(startDate);
     while (currentDate <= now) {
       const week = [];
       for (let d = 0; d < 7; d++) {
-        week.push(new Date(currentDate));
+        if (currentDate <= now) {
+          week.push(new Date(currentDate));
+        }
         currentDate.setDate(currentDate.getDate() + 1);
       }
       weeks.push(week);
     }
 
-    // Determine max total seconds (for color scaling)
+    // Determine max total seconds for scaling.
     let maxValue = 0;
     for (const dayStr in dailyTotals) {
       const statesObj = dailyTotals[dayStr];
-      const sumSeconds = Object.values(statesObj).reduce(
-        (acc, val) => acc + val,
-        0
-      );
-      if (sumSeconds > maxValue) {
-        maxValue = sumSeconds;
-      }
+      const sumSeconds = Object.values(statesObj).reduce((acc, val) => acc + val, 0);
+      if (sumSeconds > maxValue) maxValue = sumSeconds;
     }
 
-    // GitHub-like color palette
-    const colors = [
-      "#ebedf0", // no data
-      "#c6e48b",
-      "#7bc96f",
-      "#239a3b",
-      "#196127",
-    ];
+    // Constants for cell dimensions.
+    const cellWidth = 12;
+    const cellMargin = 2;
+    const weekColWidth = cellWidth + cellMargin; // total width per week column
 
-    // Create the heatmap grid container
-    const heatmapContainer = document.createElement("div");
-    heatmapContainer.style.display = "flex";
-    heatmapContainer.style.flexWrap = "nowrap";
+    // --- Build Month Header with Grouping ---
+    const monthHeader = document.createElement("div");
+    monthHeader.style.display = "flex";
+    monthHeader.style.marginLeft = "40px"; // space for day labels
+    monthHeader.style.marginBottom = "4px";
+    monthHeader.style.fontSize = "0.75em";
+    monthHeader.style.color = style.getPropertyValue("--primary-text-color").trim() || "#555";
+
+    // Group weeks by month.
+    let groups = [];
+    let currentGroup = null;
+    weeks.forEach((week) => {
+      // Use the first day of the week.
+      const firstDay = week[0];
+      const month = firstDay.getMonth();
+      const monthName = firstDay.toLocaleString("default", { month: "short" });
+      if (!currentGroup) {
+        currentGroup = { month, monthName, count: 1 };
+      } else if (currentGroup.month === month) {
+        currentGroup.count++;
+      } else {
+        groups.push(currentGroup);
+        currentGroup = { month, monthName, count: 1 };
+      }
+    });
+    if (currentGroup) {
+      groups.push(currentGroup);
+    }
+
+    groups.forEach((group) => {
+      const label = document.createElement("div");
+      label.style.width = `${group.count * weekColWidth}px`;
+      label.style.textAlign = "center";
+      label.textContent = group.monthName;
+      monthHeader.appendChild(label);
+    });
+    container.appendChild(monthHeader);
+
+    // --- Build Main Grid: Day Labels + Heatmap ---
+    const gridContainer = document.createElement("div");
+    gridContainer.style.display = "flex";
+
+    // Day labels column.
+    const dayLabels = document.createElement("div");
+    dayLabels.style.display = "flex";
+    dayLabels.style.flexDirection = "column";
+    dayLabels.style.marginRight = "4px";
+    dayLabels.style.fontSize = "0.75em";
+    dayLabels.style.color = style.getPropertyValue("--secondary-text-color").trim() || "#888";
+    const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    for (let i = 0; i < 7; i++) {
+      const label = document.createElement("div");
+      label.style.height = `${cellWidth}px`;
+      label.style.marginBottom = `${cellMargin}px`;
+      if (i === 1 || i === 3 || i === 5) {
+        label.textContent = dayNames[i];
+      } else {
+        label.textContent = "";
+      }
+      dayLabels.appendChild(label);
+    }
+    gridContainer.appendChild(dayLabels);
+
+    // Heatmap grid container.
+    const heatmapGrid = document.createElement("div");
+    heatmapGrid.style.display = "flex";
+    heatmapGrid.style.flexWrap = "nowrap";
 
     weeks.forEach((week) => {
       const col = document.createElement("div");
       col.style.display = "flex";
       col.style.flexDirection = "column";
-      col.style.marginRight = "2px";
-      week.forEach((date) => {
-        const dayStr = date.toISOString().split("T")[0];
-        const statesObj = dailyTotals[dayStr] || {};
-        const sumSeconds = Object.values(statesObj).reduce(
-          (acc, val) => acc + val,
-          0
-        );
-        let colorIndex = 0;
-        if (maxValue > 0 && sumSeconds > 0) {
-          const fraction = sumSeconds / maxValue;
-          if (fraction > 0.75) {
-            colorIndex = 4;
-          } else if (fraction > 0.5) {
-            colorIndex = 3;
-          } else if (fraction > 0.25) {
-            colorIndex = 2;
+      col.style.marginRight = `${cellMargin}px`;
+      // Create one cell per day.
+      for (let i = 0; i < 7; i++) {
+        let cell;
+        if (i < week.length) {
+          const date = week[i];
+          const dayStr = date.toISOString().split("T")[0];
+          const statesObj = dailyTotals[dayStr] || {};
+          const sumSeconds = Object.values(statesObj).reduce((acc, val) => acc + val, 0);
+          let colorIndex = 0;
+          if (maxValue > 0 && sumSeconds > 0) {
+            const fraction = sumSeconds / maxValue;
+            if (fraction > 0.75) {
+              colorIndex = 4;
+            } else if (fraction > 0.5) {
+              colorIndex = 3;
+            } else if (fraction > 0.25) {
+              colorIndex = 2;
+            } else {
+              colorIndex = 1;
+            }
+          }
+          cell = document.createElement("div");
+          cell.style.width = `${cellWidth}px`;
+          cell.style.height = `${cellWidth}px`;
+          cell.style.marginBottom = `${cellMargin}px`;
+          cell.style.backgroundColor = colors[colorIndex];
+          cell.style.borderRadius = "2px";
+          cell.style.pointerEvents = "auto";
+          cell.style.cursor = "pointer";
+          if (sumSeconds > 0) {
+            const dayTotal = Math.round(sumSeconds);
+            const lines = [`${dayStr}: ${dayTotal} sec total`];
+            for (const [gameName, secs] of Object.entries(statesObj)) {
+              lines.push(`  ${gameName}: ${Math.round(secs)} sec`);
+            }
+            cell.title = lines.join("\n");
           } else {
-            colorIndex = 1;
+            cell.title = `${dayStr}: No data`;
           }
-        }
-        const cell = document.createElement("div");
-        cell.style.width = "12px";
-        cell.style.height = "12px";
-        cell.style.marginBottom = "2px";
-        cell.style.backgroundColor = colors[colorIndex];
-        cell.style.borderRadius = "2px";
-        cell.style.pointerEvents = "auto";
-        cell.style.cursor = "pointer";
-        if (sumSeconds > 0) {
-          const dayTotal = Math.round(sumSeconds);
-          const lines = [`${dayStr}: ${dayTotal} sec total`];
-          for (const [gameName, secs] of Object.entries(statesObj)) {
-            lines.push(`  ${gameName}: ${Math.round(secs)} sec`);
-          }
-          cell.title = lines.join("\n");
         } else {
-          cell.title = `${dayStr}: No data`;
+          cell = document.createElement("div");
+          cell.style.width = `${cellWidth}px`;
+          cell.style.height = `${cellWidth}px`;
+          cell.style.marginBottom = `${cellMargin}px`;
         }
         col.appendChild(cell);
-      });
-      heatmapContainer.appendChild(col);
+      }
+      heatmapGrid.appendChild(col);
     });
+    gridContainer.appendChild(heatmapGrid);
+    container.appendChild(gridContainer);
 
-    container.appendChild(heatmapContainer);
-
-    // Add version text for debugging
+    // Version/debug text.
     const versionText = document.createElement("div");
     versionText.style.marginTop = "8px";
     versionText.style.fontSize = "0.8em";
-    versionText.style.color = "var(--secondary-text-color)";
+    versionText.style.color = style.getPropertyValue("--secondary-text-color").trim() || "#888";
     versionText.textContent = `Calendar Heatmap Card – Version: ${CARD_VERSION}`;
     container.appendChild(versionText);
 
