@@ -81,6 +81,20 @@ class CalendarHeatmapCard extends HTMLElement {
     if (!this._hass) return;
     this.shadowRoot.innerHTML = "";
 
+    // Helper function to format duration.
+    function formatDuration(sec) {
+      if (sec < 60) {
+        return `${Math.round(sec)} sec`;
+      } else if (sec < 3600) {
+        return `${Math.round(sec / 60)} min`;
+      } else {
+        const hours = Math.floor(sec / 3600);
+        const remainder = sec % 3600;
+        const minutes = Math.round(remainder / 60);
+        return minutes > 0 ? `${hours}h ${minutes}min` : `${hours}h`;
+      }
+    }
+
     // Create ha-card for standard theming.
     const card = document.createElement("ha-card");
     card.header = this._config.title || "Calendar Heatmap";
@@ -126,13 +140,16 @@ class CalendarHeatmapCard extends HTMLElement {
       }
     }
 
-    // Build weeks array (each week is an array of days) from earliest Sunday to today.
+    // Build weeks array (each week is an array of days) from earliest Monday to today.
     const now = new Date();
     let startDate = new Date(
       now.getTime() - this._config.days_to_show * 24 * 60 * 60 * 1000
     );
-    const dayOfWeek = startDate.getDay();
-    startDate.setDate(startDate.getDate() - dayOfWeek);
+    // Adjust startDate to the previous Monday.
+    const day = startDate.getDay(); // 0 (Sun) to 6 (Sat)
+    const diff = day === 0 ? -6 : 1 - day;
+    startDate.setDate(startDate.getDate() + diff);
+
     const weeks = [];
     const currentDate = new Date(startDate);
     while (currentDate <= now) {
@@ -208,13 +225,17 @@ class CalendarHeatmapCard extends HTMLElement {
     dayLabels.style.marginRight = "4px";
     dayLabels.style.fontSize = "0.75em";
     dayLabels.style.color = style.getPropertyValue("--secondary-text-color").trim() || "#888";
-    const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    // Using a known Monday as a base date to localize the weekday names.
+    const baseMonday = new Date(1970, 0, 5);
     for (let i = 0; i < 7; i++) {
       const label = document.createElement("div");
       label.style.height = `${cellWidth}px`;
       label.style.marginBottom = `${cellMargin}px`;
-      if (i === 1 || i === 3 || i === 5) {
-        label.textContent = dayNames[i];
+      // Only label Monday (i=0), Wednesday (i=2) and Friday (i=4)
+      if (i === 0 || i === 2 || i === 4) {
+        label.textContent = new Date(
+          baseMonday.getTime() + i * 86400000
+        ).toLocaleDateString("default", { weekday: "short" });
       } else {
         label.textContent = "";
       }
@@ -262,10 +283,9 @@ class CalendarHeatmapCard extends HTMLElement {
           cell.style.pointerEvents = "auto";
           cell.style.cursor = "pointer";
           if (sumSeconds > 0) {
-            const dayTotal = Math.round(sumSeconds);
-            const lines = [`${dayStr}: ${dayTotal} sec total`];
+            const lines = [`${dayStr}: ${formatDuration(sumSeconds)} total`];
             for (const [gameName, secs] of Object.entries(statesObj)) {
-              lines.push(`  ${gameName}: ${Math.round(secs)} sec`);
+              lines.push(`  ${gameName}: ${formatDuration(secs)}`);
             }
             cell.title = lines.join("\n");
           } else {
