@@ -153,6 +153,7 @@ class CalendarHeatmapCard extends HTMLElement {
 
     // Build Main Grid: Day Labels + Heatmap
     const gridContainer = createElement('div', COMMON_STYLES.gridContainer);
+    gridContainer.classList.add('grid-container');
     
     // Day labels column
     const dayLabels = createDayLabels(getComputedStyle(this));

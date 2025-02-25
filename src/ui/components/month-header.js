@@ -14,18 +14,31 @@ export function createMonthHeader(monthGroups, style) {
   const monthHeader = createElement('div', {
     ...COMMON_STYLES.monthHeader,
     color: primaryTextColor,
+    whiteSpace: 'nowrap',
   });
   
+  // Calculate total width to ensure proper alignment
+  let totalWidth = 0;
+  
   monthGroups.forEach((group) => {
+    const width = group.count * weekColWidth;
+    totalWidth += width;
+    
     const label = createElement('div', {
-      width: `${group.count * weekColWidth}px`,
+      width: `${width}px`,
       textAlign: 'center',
+      display: 'inline-block',
+      overflow: 'hidden',
+      boxSizing: 'border-box',
     }, {
       textContent: group.monthName,
     });
     
     monthHeader.appendChild(label);
   });
+  
+  // Set a minimum width to ensure proper alignment
+  monthHeader.style.minWidth = `${totalWidth}px`;
   
   return monthHeader;
 } 

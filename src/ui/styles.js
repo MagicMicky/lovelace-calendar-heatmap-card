@@ -39,6 +39,8 @@ export function getCardStyles(theme) {
       padding-right: 24px;
       background-color: var(--ha-card-background);
       min-height: 300px;
+      overflow-x: auto;
+      overflow-y: hidden;
     }
     .detail-view {
       flex: 1;
@@ -60,6 +62,10 @@ export function getCardStyles(theme) {
       font-size: 1.4em;
       font-weight: 500;
       color: var(--primary-text-color, ${primaryTextColor});
+      position: sticky;
+      left: 0;
+      background-color: var(--ha-card-background);
+      z-index: 1;
     }
     .detail-view h2 {
       margin-top: 0;
@@ -78,6 +84,10 @@ export function getCardStyles(theme) {
       font-size: 0.8em;
       font-weight: 500;
       color: var(--primary-text-color, ${primaryTextColor});
+      position: sticky;
+      left: 40px;
+      background-color: var(--ha-card-background);
+      z-index: 1;
     }
     .day-labels {
       display: flex;
@@ -85,6 +95,10 @@ export function getCardStyles(theme) {
       margin-right: 4px;
       font-size: 0.75em;
       color: var(--secondary-text-color, #888);
+      position: sticky;
+      left: 0;
+      z-index: 2;
+      background-color: var(--ha-card-background);
     }
     .day-labels div {
       height: 12px;
@@ -93,6 +107,11 @@ export function getCardStyles(theme) {
     .heatmap-grid {
       display: flex;
       flex-wrap: nowrap;
+      min-width: min-content;
+    }
+    .grid-container {
+      display: flex;
+      min-width: min-content;
     }
     @media (max-width: 500px) {
       .card-content {
@@ -134,6 +153,8 @@ export const COMMON_STYLES = {
     paddingRight: '24px',
     backgroundColor: 'var(--ha-card-background)',
     minHeight: '300px',
+    overflowX: 'auto',
+    overflowY: 'hidden',
   },
   
   detailView: {
@@ -156,6 +177,10 @@ export const COMMON_STYLES = {
     padding: '16px 16px 8px',
     fontSize: '1.4em',
     fontWeight: '500',
+    position: 'sticky',
+    left: '0',
+    backgroundColor: 'var(--ha-card-background)',
+    zIndex: '1',
   },
   
   monthHeader: {
@@ -164,6 +189,10 @@ export const COMMON_STYLES = {
     marginBottom: '4px',
     fontSize: '0.8em',
     fontWeight: '500',
+    position: 'sticky',
+    left: '40px',
+    backgroundColor: 'var(--ha-card-background)',
+    zIndex: '1',
   },
   
   dayLabels: {
@@ -171,15 +200,21 @@ export const COMMON_STYLES = {
     flexDirection: 'column',
     marginRight: '4px',
     fontSize: '0.75em',
+    position: 'sticky',
+    left: '0',
+    zIndex: '2',
+    backgroundColor: 'var(--ha-card-background)',
   },
   
   gridContainer: {
     display: 'flex',
+    minWidth: 'min-content',
   },
   
   heatmapGrid: {
     display: 'flex',
     flexWrap: 'nowrap',
+    minWidth: 'min-content',
   },
   
   weekColumn: {
