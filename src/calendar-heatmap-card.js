@@ -1,6 +1,7 @@
 import { LitElement, html, css } from 'lit';
 import { CARD_VERSION, DEFAULT_CONFIG } from './constants.js';
 import { fetchHistory } from './services/history-service.js';
+import { subscribeToEntity } from './services/entity-subscription.js';
 import { 
   processDailyTotals, 
   calculateMaxValue, 
@@ -47,7 +48,7 @@ class CalendarHeatmapCard extends LitElement {
   constructor() {
     super();
     this._hasConnected = false;
-    this._interval = null;
+    this._unsubscribe = null; // Store the unsubscribe function
     this._selectedDate = null;
     this._dailyTotals = {};
     this._gameColorMap = {};
@@ -55,6 +56,8 @@ class CalendarHeatmapCard extends LitElement {
     this._overallTotals = {};
     this._bestGame = "";
     this._bestSec = 0;
+    this._lastEntityState = null;
+    this._lastHistoryTimestamp = 0;
   }
 
   setConfig(config) {
@@ -70,7 +73,6 @@ class CalendarHeatmapCard extends LitElement {
     // If include_unknown is set to true, remove 'unknown' from ignored_states
     if (this._config.include_unknown === true && this._config.ignored_states.includes('unknown')) {
       this._config.ignored_states = this._config.ignored_states.filter(state => state !== 'unknown');
-      console.log('Calendar Heatmap: Including unknown states, ignored states are now:', this._config.ignored_states);
     }
   }
 
@@ -78,18 +80,15 @@ class CalendarHeatmapCard extends LitElement {
     const oldHass = this._hass;
     this._hass = hass;
     
-    // Debug logging for entity state
-    if (this._config && this._config.entity && hass.states[this._config.entity]) {
-      console.log('Calendar Heatmap: Entity state', this._config.entity, hass.states[this._config.entity].state);
-    } else if (this._config && this._config.entity) {
-      console.warn('Calendar Heatmap: Entity not found', this._config.entity);
-    }
-    
-    // Only update if this is the first time setting hass or if the entity state has changed
-    if (!oldHass || 
-        !oldHass.states[this._config.entity] || 
-        oldHass.states[this._config.entity].state !== hass.states[this._config.entity].state) {
+    // Only fetch data on first connection or if hass connection changes
+    // The subscription will handle updates when the entity state changes
+    if (!oldHass || !this._hasConnected) {
       this._fetchData();
+      
+      // If we already have a connection, make sure our subscription is using it
+      if (this._hasConnected) {
+        this._setupSubscription();
+      }
     }
   }
 
@@ -101,7 +100,6 @@ class CalendarHeatmapCard extends LitElement {
     super.connectedCallback();
     if (!this._hasConnected) {
       this._hasConnected = true;
-      this._setupRefreshInterval();
       
       // Ensure data is fetched and detail view is populated on first connection
       this._fetchData().then(() => {
@@ -111,63 +109,92 @@ class CalendarHeatmapCard extends LitElement {
             this._updateDetailView(this._selectedDate || null);
           }
         }
+        
+        // Set up subscription after initial data fetch
+        this._setupSubscription();
       });
     } else {
-      this._setupRefreshInterval();
+      // Re-establish subscription if reconnecting
+      this._setupSubscription();
     }
   }
 
   disconnectedCallback() {
     super.disconnectedCallback();
-    this._clearRefreshInterval();
+    this._unsubscribeFromEntity();
   }
 
-  _setupRefreshInterval() {
-    if (!this._interval) {
-      const intervalMs = this._config.refresh_interval * 1000;
-      if (intervalMs > 0) {
-        this._interval = setInterval(() => this._fetchData(), intervalMs);
-      }
+  /**
+   * Set up subscription to entity state changes
+   * @private
+   */
+  async _setupSubscription() {
+    // First, clean up any existing subscription
+    this._unsubscribeFromEntity();
+    
+    if (!this._hass || !this._config || !this._config.entity) {
+      return;
+    }
+    
+    try {
+      // Subscribe to entity state changes
+      this._unsubscribe = await subscribeToEntity(
+        this._hass, 
+        this._config.entity, 
+        (stateData) => {
+          // Update last entity state
+          if (stateData.new_state) {
+            this._lastEntityState = stateData.new_state.state;
+          }
+          
+          // Fetch new data with a small delay to allow Home Assistant to update history
+          setTimeout(() => {
+            this._fetchData();
+          }, 2000); // 2 second delay
+        }
+      );
+    } catch (error) {
+      // Error handled silently
     }
   }
 
-  _clearRefreshInterval() {
-    if (this._interval) {
-      clearInterval(this._interval);
-      this._interval = null;
+  /**
+   * Unsubscribe from entity state changes
+   * @private
+   */
+  _unsubscribeFromEntity() {
+    if (this._unsubscribe && typeof this._unsubscribe === 'function') {
+      try {
+        this._unsubscribe();
+      } catch (error) {
+        // Error handled silently
+      }
+      this._unsubscribe = null;
     }
   }
 
   async _fetchData() {
     if (!this._hass || !this._config) {
-      console.warn('Calendar Heatmap: No hass or config available');
       return Promise.resolve();
     }
     
     const entityId = this._config.entity;
     const daysToShow = this._config.days_to_show || DEFAULT_CONFIG.days_to_show;
     
-    console.log('Calendar Heatmap: Fetching data for', entityId, 'with config:', this._config);
-    
     try {
       // Fetch history data
       const historyData = await fetchHistory(this._hass, entityId, daysToShow);
       
       if (!historyData || historyData.length === 0 || !historyData[0] || historyData[0].length === 0) {
-        console.warn('Calendar Heatmap: No history data returned for', entityId);
         return Promise.resolve();
       }
       
-      console.log('Calendar Heatmap: Successfully fetched history with', historyData[0].length, 'entries');
-      
       // Process the data
       const ignoredStates = this._config.ignored_states || DEFAULT_CONFIG.ignored_states;
-      console.log('Calendar Heatmap: Using ignored states:', ignoredStates);
       
       const dailyTotals = processDailyTotals(historyData, ignoredStates);
       
       if (Object.keys(dailyTotals).length === 0) {
-        console.warn('Calendar Heatmap: No daily totals generated. Check if all states are being filtered out.');
         return Promise.resolve();
       }
       
@@ -181,20 +208,10 @@ class CalendarHeatmapCard extends LitElement {
       this._bestGame = bestGame;
       this._bestSec = bestSec;
       
-      console.log('Calendar Heatmap: Data processing complete', {
-        dailyTotals: this._dailyTotals,
-        maxValue: this._maxValue,
-        gameColorMap: this._gameColorMap,
-        overallTotals: this._overallTotals,
-        bestGame: this._bestGame,
-        bestSec: this._bestSec
-      });
-      
       // Request an update to render with new data
       this.requestUpdate();
       return Promise.resolve();
     } catch (error) {
-      console.error('Calendar Heatmap: Error fetching or processing data', error);
       return Promise.reject(error);
     }
   }

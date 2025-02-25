@@ -15,21 +15,16 @@
 export async function fetchHistory(hass, entityId, daysToShow) {
   // Validate inputs
   if (!hass) {
-    console.warn('Calendar Heatmap: Invalid Home Assistant instance');
     return [];
   }
   
   if (!entityId || typeof entityId !== 'string') {
-    console.warn('Calendar Heatmap: Invalid entity ID');
     return [];
   }
   
   if (!daysToShow || daysToShow <= 0) {
-    console.warn('Calendar Heatmap: Invalid days to show, using default of 30 days');
     daysToShow = 30;
   }
-  
-  console.log('Calendar Heatmap: Fetching history for', entityId, 'for', daysToShow, 'days');
   
   // Calculate date range
   const now = new Date();
@@ -38,7 +33,6 @@ export async function fetchHistory(hass, entityId, daysToShow) {
   // Try WebSocket API first if available
   if (hass.callWS) {
     try {
-      console.log('Calendar Heatmap: Using WebSocket API');
       // Use the WebSocket API for better performance
       const history = await hass.callWS({
         type: 'history/history_during_period',
@@ -50,22 +44,10 @@ export async function fetchHistory(hass, entityId, daysToShow) {
         significant_changes_only: false,
       });
       
-      console.log('Calendar Heatmap: WebSocket response', history);
-      
       // Check if we got a valid response
       if (history && history[entityId] && Array.isArray(history[entityId])) {
-        console.log('Calendar Heatmap: Valid WebSocket response with', history[entityId].length, 'entries');
-        
-        // Check if we need to convert the compressed format
-        const firstEntry = history[entityId][0];
-        if (firstEntry && (firstEntry.s !== undefined || firstEntry.lu !== undefined)) {
-          console.log('Calendar Heatmap: Detected compressed history format, using as is');
-        }
-        
         // Format the response to match the expected format in the data processor
         return [history[entityId]];
-      } else {
-        console.warn('Calendar Heatmap: Unexpected WebSocket response format, falling back to REST API');
       }
     } catch (error) {
       console.error('Calendar Heatmap: Error fetching history data via WebSocket', error);
@@ -75,7 +57,6 @@ export async function fetchHistory(hass, entityId, daysToShow) {
   // Fallback to REST API
   if (hass.callApi) {
     try {
-      console.log('Calendar Heatmap: Using REST API');
       const startISOString = start.toISOString();
       const endISOString = now.toISOString();
       
@@ -87,28 +68,18 @@ export async function fetchHistory(hass, entityId, daysToShow) {
       // Make the API call
       const history = await hass.callApi('GET', url);
       
-      console.log('Calendar Heatmap: REST API response', history);
-      
       // Validate response
       if (Array.isArray(history) && history.length > 0) {
         // Check if the first item is an array of state objects
         if (Array.isArray(history[0])) {
-          console.log('Calendar Heatmap: Valid REST API response with', history[0].length, 'entries');
           return history;
-        } else {
-          console.warn('Calendar Heatmap: Unexpected REST API response format');
         }
-      } else {
-        console.warn('Calendar Heatmap: Empty or invalid history response');
       }
     } catch (error) {
       console.error('Calendar Heatmap: Error fetching history data via REST API', error);
     }
-  } else {
-    console.warn('Calendar Heatmap: No API methods available on hass object');
   }
   
-  console.warn('Calendar Heatmap: Failed to fetch history data');
   // Return empty array if all methods fail
   return [];
 } 
