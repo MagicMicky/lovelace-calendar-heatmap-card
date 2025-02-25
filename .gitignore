@@ -4,7 +4,7 @@ package-lock.json
 yarn.lock
 
 # Build output
-dist/
+# dist/ - Commented out to allow HACS to access the built files
 build/
 
 # IDE and editor files
