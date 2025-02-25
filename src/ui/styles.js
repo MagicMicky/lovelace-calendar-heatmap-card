@@ -33,42 +33,46 @@ export function getCardStyles(theme) {
       padding: 0;
     }
     .heatmap-container {
-      flex: 2;
+      flex: 3;
       min-width: 0;
       padding: 16px;
       padding-right: 24px;
-      border-right: 1px solid var(--divider-color, #CCC);
+      background-color: var(--ha-card-background);
     }
     .detail-view {
       flex: 1;
-      min-width: 240px;
+      min-width: 200px;
+      max-width: 280px;
       padding: 16px;
-      background-color: var(--ha-card-background);
-      border-radius: 4px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+      background-color: var(--secondary-background-color, #f7f7f7);
+      border-left: 1px solid var(--divider-color, #CCC);
       display: flex;
       flex-direction: column;
       overflow: hidden;
+      opacity: 0.9;
     }
     .card-header {
-      padding: 16px 16px 0;
-      font-size: 1.2em;
+      padding: 16px 16px 8px;
+      font-size: 1.4em;
       font-weight: 500;
       color: var(--primary-text-color, ${primaryTextColor});
     }
     .detail-view h2 {
       margin-top: 0;
       font-size: 1em;
+      opacity: 0.9;
     }
     .detail-view h3 {
       margin: 8px 0 4px;
       font-size: 0.9em;
+      opacity: 0.8;
     }
     .month-header {
       display: flex;
       margin-left: 40px;
       margin-bottom: 4px;
-      font-size: 0.75em;
+      font-size: 0.8em;
+      font-weight: 500;
       color: var(--primary-text-color, ${primaryTextColor});
     }
     .day-labels {
@@ -97,7 +101,10 @@ export function getCardStyles(theme) {
         margin-bottom: 16px;
       }
       .detail-view {
-        margin-top: 0;
+        max-width: none;
+        border-left: none;
+        background-color: var(--ha-card-background);
+        opacity: 1;
       }
     }
   `;
@@ -114,24 +121,29 @@ export const COMMON_STYLES = {
   },
   
   heatmapContainer: {
-    flex: '2',
+    flex: '3',
     minWidth: '0',
     padding: '16px',
     paddingRight: '24px',
+    backgroundColor: 'var(--ha-card-background)',
   },
   
   detailView: {
     flex: '1',
-    minWidth: '240px',
+    minWidth: '200px',
+    maxWidth: '280px',
     padding: '16px',
+    backgroundColor: 'var(--secondary-background-color, #f7f7f7)',
+    borderLeft: '1px solid var(--divider-color, #CCC)',
     display: 'flex',
     flexDirection: 'column',
     overflow: 'hidden',
+    opacity: '0.9',
   },
   
   cardHeader: {
-    padding: '16px 16px 0',
-    fontSize: '1.2em',
+    padding: '16px 16px 8px',
+    fontSize: '1.4em',
     fontWeight: '500',
   },
   
@@ -139,7 +151,8 @@ export const COMMON_STYLES = {
     display: 'flex',
     marginLeft: '40px',
     marginBottom: '4px',
-    fontSize: '0.75em',
+    fontSize: '0.8em',
+    fontWeight: '500',
   },
   
   dayLabels: {
@@ -166,6 +179,7 @@ export const COMMON_STYLES = {
   versionText: {
     marginTop: '8px',
     fontSize: '0.8em',
+    opacity: '0.6',
   },
   
   breakdownItem: {

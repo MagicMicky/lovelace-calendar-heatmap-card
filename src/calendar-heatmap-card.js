@@ -179,11 +179,24 @@ class CalendarHeatmapCard extends HTMLElement {
     gridContainer.appendChild(heatmapGrid);
     heatmapContainer.appendChild(gridContainer);
 
+    // Add a subtle label to the detail view to indicate it's secondary
+    const detailHeader = createElement('div', {
+      fontSize: '0.9em',
+      fontWeight: '500',
+      marginBottom: '8px',
+      opacity: '0.7',
+      textTransform: 'uppercase',
+    }, {
+      textContent: 'Details'
+    });
+    detailView.insertBefore(detailHeader, detailView.firstChild);
+
     // Version/debug text
     const secondaryTextColor = getComputedStyle(this).getPropertyValue("--secondary-text-color").trim() || "#888";
     const versionText = createElement('div', {
       ...COMMON_STYLES.versionText,
       color: secondaryTextColor,
+      opacity: '0.6',
     }, {
       textContent: `Calendar Heatmap Card – Version: ${CARD_VERSION}`
     });
