@@ -108,6 +108,48 @@ Examples include:
 - Presence/occupancy sensors
 - Any sensor that changes state throughout the day
 
+## Integration Examples
+
+### Discord Game Activity
+
+The Calendar Heatmap Card works perfectly with the [Discord Game integration](https://github.com/LordBoos/discord_game) for Home Assistant, which provides a sensor that tracks the games you play.
+
+When you set up the Discord Game integration, it creates a sensor for each user that shows the current game being played. The sensor follows the format `sensor.discord_user_*_game` where `*` is your Discord user ID. This sensor's state changes to the name of the game when you're playing something, and to "idle", "offline", or other status indicators when you're not.
+
+#### Example Configuration
+
+```yaml
+type: custom:calendar-heatmap-card
+entity: sensor.discord_user_game
+title: My Discord Gaming Activity
+days_to_show: 365
+ignored_states:
+  - unknown
+  - idle
+  - offline
+  - ""
+  - dnd
+  - online
+refresh_interval: 300
+theme: dark
+start_day_of_week: monday
+```
+
+Replace `sensor.discord_user_game` with your actual Discord game sensor as it appears in Home Assistant.
+
+#### How It Works
+
+The Calendar Heatmap Card will:
+- Track the time spent in each game state
+- Display different colors for different games
+- Show a breakdown of your gaming activity when you hover over or click on a day
+- Filter out states like "idle" and "offline" by default (configurable)
+
+This gives you a beautiful visualization of your gaming habits over time, showing which days you played the most and which games dominated your play time.
+
+![Discord Gaming Activity Example](https://raw.githubusercontent.com/MagicMicky/lovelace-calendar-heatmap-card/main/docs/images/discord-example.png)
+*Example of Discord gaming activity visualization (you may want to replace this with your own screenshot)*
+
 ## Development
 
 ### Project Structure
