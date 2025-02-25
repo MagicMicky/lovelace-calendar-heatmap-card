@@ -2,8 +2,8 @@
  * Constants for cell dimensions
  */
 export const CELL_DIMENSIONS = {
-  cellWidth: 12,
-  cellMargin: 2,
+  cellWidth: 14,
+  cellMargin: 3,
   get weekColWidth() {
     return this.cellWidth + this.cellMargin;
   }
@@ -53,38 +53,41 @@ export function getStyles(theme) {
       flex-wrap: wrap;
       padding: 0;
       height: auto;
+      min-height: 220px;
     }
     
     /* Layout Containers */
     .heatmap-container {
       flex: 3;
       min-width: 0;
-      padding: 16px;
-      padding-right: 24px;
+      padding: 16px 16px 24px 16px;
       background-color: var(--ha-card-background);
-      min-height: 200px;
+      min-height: 220px;
       overflow: hidden;
       position: relative;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
     }
     
     .detail-view {
       flex: 1;
       min-width: 200px;
       max-width: 280px;
-      padding: 16px;
+      padding: 16px 16px 16px 12px;
       background-color: var(--secondary-background-color, #f7f7f7);
       border-left: 1px solid var(--divider-color, #CCC);
       display: flex;
       flex-direction: column;
       overflow: hidden;
       opacity: 0.9;
-      height: 200px;
-      max-height: 200px;
+      min-height: 220px;
+      height: 100%;
     }
     
     /* Headers */
     .card-header {
-      padding: 16px 16px 8px;
+      padding: 8px 0 16px;
       font-size: 1.4em;
       font-weight: 500;
       color: var(--primary-text-color, ${primaryTextColor});
@@ -95,6 +98,7 @@ export function getStyles(theme) {
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      margin-bottom: 4px;
     }
     
     .detail-header {
@@ -132,16 +136,17 @@ export function getStyles(theme) {
     /* Month Header */
     .month-header {
       display: flex;
-      margin-left: 40px;
+      margin-left: 36px;
       margin-bottom: 4px;
       font-size: 0.8em;
       font-weight: 500;
       color: var(--heatmap-primary-text);
       position: sticky;
-      left: 40px;
+      left: 36px;
       background-color: var(--ha-card-background);
       z-index: 1;
       white-space: nowrap;
+      padding-left: 3px;
     }
     
     .month-label {
@@ -162,25 +167,46 @@ export function getStyles(theme) {
       left: 0;
       z-index: 2;
       background-color: var(--ha-card-background);
+      width: 32px;
+      text-align: right;
+      padding-top: 6px;
+      box-sizing: border-box;
+      margin-top: 0;
+      margin-bottom: 0;
     }
     
     .day-label {
       height: ${CELL_DIMENSIONS.cellWidth}px;
       margin-bottom: ${CELL_DIMENSIONS.cellMargin}px;
+      padding-right: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      box-sizing: border-box;
     }
     
     /* Grid Components */
     .grid-container {
       display: flex;
       min-width: min-content;
-      overflow: hidden;
+      overflow: visible;
+      margin-top: 0;
+      flex: 1;
+      align-items: flex-start;
+      position: relative;
+      box-sizing: border-box;
+      margin-left: 0;
+      margin-right: 0;
+      padding: 0;
     }
     
     .heatmap-grid {
       display: flex;
       flex-wrap: nowrap;
       min-width: min-content;
-      overflow: hidden;
+      overflow: visible;
+      padding: 3px;
+      box-sizing: border-box;
     }
     
     .week-column {
@@ -189,6 +215,7 @@ export function getStyles(theme) {
       margin-right: ${CELL_DIMENSIONS.cellMargin}px;
       width: ${CELL_DIMENSIONS.cellWidth}px;
       flex-shrink: 0;
+      box-sizing: border-box;
     }
     
     .day-cell {
@@ -197,8 +224,10 @@ export function getStyles(theme) {
       margin-bottom: var(--heatmap-cell-margin);
       border-radius: 2px;
       cursor: pointer;
-      transition: box-shadow 0.2s ease;
+      transition: all 0.2s ease;
       flex-shrink: 0;
+      position: relative;
+      box-sizing: border-box;
     }
     
     .empty-cell {
@@ -206,6 +235,7 @@ export function getStyles(theme) {
       height: ${CELL_DIMENSIONS.cellWidth}px;
       margin-bottom: ${CELL_DIMENSIONS.cellMargin}px;
       flex-shrink: 0;
+      box-sizing: border-box;
     }
     
     /* Detail View Components */
@@ -253,6 +283,7 @@ export function getStyles(theme) {
       height: 12px;
       margin-right: 8px;
       flex-shrink: 0;
+      border-radius: 2px;
     }
     
     .game-name {
@@ -280,17 +311,71 @@ export function getStyles(theme) {
       }
     }
 
-    /* Add these styles to the existing CSS */
-
+    /* Improved hover and selection styles */
     .day-cell:hover {
       box-shadow: 0 0 0 2px rgba(var(--rgb-primary-color, 33, 150, 243), 0.5);
       z-index: 3;
+      transform: scale(1.05);
     }
 
     .day-cell.selected {
       box-shadow: 0 0 0 3px var(--primary-color, #2196F3);
       z-index: 4;
       transform: scale(1.1);
+    }
+    
+    /* Fix for edge cells to prevent halo clipping */
+    .heatmap-grid-wrapper {
+      padding: 3px;
+      overflow: visible !important;
+      position: relative;
+      box-sizing: border-box;
+    }
+    
+    /* Specific styles for edge cells - using transform instead of margin to prevent alignment issues */
+    .day-cell.first-in-row,
+    .day-cell.last-in-row,
+    .day-cell.first-in-column,
+    .day-cell.last-in-column {
+      position: relative;
+      z-index: 2;
+    }
+    
+    /* New classes to replace inline styles */
+    .flex-container {
+      display: flex;
+    }
+    
+    .flex-align-stretch {
+      align-items: stretch;
+    }
+    
+    .flex-align-start {
+      align-items: flex-start;
+    }
+    
+    .flex-column {
+      flex-direction: column;
+    }
+    
+    .grid-container-spacing {
+      margin-top: 2px;
+    }
+    
+    .month-header-spacing {
+      margin-bottom: 2px;
+    }
+    
+    .day-label-spacing {
+      margin-right: 4px;
+    }
+    
+    .week-column-spacing {
+      margin-right: ${CELL_DIMENSIONS.cellMargin}px;
+    }
+    
+    .position-relative {
+      position: relative;
     }
   `;
 }
@@ -303,4 +388,4 @@ export function getCardStyles(theme) {
 
 // For backward compatibility - empty objects that will be removed in future
 export const COMPONENT_STYLES = {};
-export const COMMON_STYLES = COMPONENT_STYLES; 
+export const COMMON_STYLES = COMPONENT_STYLES;

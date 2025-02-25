@@ -26,16 +26,16 @@ export function createHeatmapGrid(
   onCellClick,
   selectedDate
 ) {
-  const { weekColWidth } = CELL_DIMENSIONS;
+  const { cellWidth, cellMargin, weekColWidth } = CELL_DIMENSIONS;
   
   const heatmapGrid = createElement('div', {}, {
     className: 'heatmap-grid',
     style: `min-width: ${weeks.length * weekColWidth}px;`
   });
   
-  weeks.forEach((week) => {
+  weeks.forEach((week, weekIndex) => {
     const col = createElement('div', {}, {
-      className: 'week-column'
+      className: 'week-column week-column-spacing'
     });
     
     // Create one cell per day
@@ -58,14 +58,22 @@ export function createHeatmapGrid(
         const cellColor = adjustColor(baseColor, intensity, theme);
         
         // Create cell with appropriate class
-        const classNames = ['day-cell'];
+        const classNames = ['day-cell', 'position-relative'];
         if (selectedDate === dayStr) {
           classNames.push('selected');
         }
         
+        // Add position-specific classes to handle edge cases
+        if (i === 0) classNames.push('first-in-row');
+        if (i === 6) classNames.push('last-in-row');
+        if (weekIndex === 0) classNames.push('first-in-column');
+        if (weekIndex === weeks.length - 1) classNames.push('last-in-column');
+        
+        // Create cell with tooltip
         cell = createElement('div', {}, {
           className: classNames.join(' '),
-          style: `background-color: ${cellColor};`
+          style: `background-color: ${cellColor};`,
+          title: `${date.toLocaleDateString()} - ${sumSeconds > 0 ? formatDuration(sumSeconds) : 'No activity'}`
         });
         
         // Store data for hover/click

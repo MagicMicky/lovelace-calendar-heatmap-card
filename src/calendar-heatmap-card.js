@@ -102,6 +102,16 @@ class CalendarHeatmapCard extends LitElement {
     if (!this._hasConnected) {
       this._hasConnected = true;
       this._setupRefreshInterval();
+      
+      // Ensure data is fetched and detail view is populated on first connection
+      this._fetchData().then(() => {
+        if (this.shadowRoot) {
+          const detailView = this.shadowRoot.querySelector('.detail-view');
+          if (detailView) {
+            this._updateDetailView(this._selectedDate || null);
+          }
+        }
+      });
     } else {
       this._setupRefreshInterval();
     }
@@ -131,7 +141,7 @@ class CalendarHeatmapCard extends LitElement {
   async _fetchData() {
     if (!this._hass || !this._config) {
       console.warn('Calendar Heatmap: No hass or config available');
-      return;
+      return Promise.resolve();
     }
     
     const entityId = this._config.entity;
@@ -145,7 +155,7 @@ class CalendarHeatmapCard extends LitElement {
       
       if (!historyData || historyData.length === 0 || !historyData[0] || historyData[0].length === 0) {
         console.warn('Calendar Heatmap: No history data returned for', entityId);
-        return;
+        return Promise.resolve();
       }
       
       console.log('Calendar Heatmap: Successfully fetched history with', historyData[0].length, 'entries');
@@ -158,7 +168,7 @@ class CalendarHeatmapCard extends LitElement {
       
       if (Object.keys(dailyTotals).length === 0) {
         console.warn('Calendar Heatmap: No daily totals generated. Check if all states are being filtered out.');
-        return;
+        return Promise.resolve();
       }
       
       // Calculate derived data
@@ -182,8 +192,10 @@ class CalendarHeatmapCard extends LitElement {
       
       // Request an update to render with new data
       this.requestUpdate();
+      return Promise.resolve();
     } catch (error) {
       console.error('Calendar Heatmap: Error fetching or processing data', error);
+      return Promise.reject(error);
     }
   }
 
@@ -319,7 +331,7 @@ class CalendarHeatmapCard extends LitElement {
 
     // Main content container
     const container = createElement('div', {}, {
-      className: 'card-content'
+      className: 'card-content flex-container flex-align-stretch'
     });
 
     // Left Panel: Heatmap Container
@@ -345,7 +357,7 @@ class CalendarHeatmapCard extends LitElement {
 
     // Build Main Grid: Day Labels + Heatmap
     const gridContainer = createElement('div', {}, {
-      className: 'grid-container'
+      className: 'grid-container flex-container flex-align-start grid-container-spacing'
     });
     
     // Day labels column
@@ -356,6 +368,11 @@ class CalendarHeatmapCard extends LitElement {
     // We'll limit the number of weeks to show to prevent scrolling
     const maxWeeks = Math.min(weeks.length, 52); // Limit to 52 weeks (1 year) maximum
     const visibleWeeks = weeks.slice(0, maxWeeks);
+
+    // Create a wrapper for the heatmap grid to handle overflow better
+    const heatmapGridWrapper = createElement('div', {}, {
+      className: 'heatmap-grid-wrapper position-relative'
+    });
 
     // Heatmap grid
     const heatmapGrid = createHeatmapGrid(
@@ -368,7 +385,9 @@ class CalendarHeatmapCard extends LitElement {
       (data) => this._onCellClick(data),
       this._selectedDate
     );
-    gridContainer.appendChild(heatmapGrid);
+    
+    heatmapGridWrapper.appendChild(heatmapGrid);
+    gridContainer.appendChild(heatmapGridWrapper);
     heatmapContainer.appendChild(gridContainer);
 
     // Initialize detail view based on selection state
@@ -389,6 +408,16 @@ class CalendarHeatmapCard extends LitElement {
     shadowRoot.innerHTML = '';
     shadowRoot.appendChild(styleElement);
     shadowRoot.appendChild(card);
+    
+    // Ensure the detail view is populated immediately after rendering
+    // This fixes the issue where the detail view is empty on initial load
+    setTimeout(() => {
+      if (this._selectedDate) {
+        this._updateDetailView(this._selectedDate);
+      } else {
+        this._updateDetailView(null);
+      }
+    }, 0);
     
     return html``;
   }

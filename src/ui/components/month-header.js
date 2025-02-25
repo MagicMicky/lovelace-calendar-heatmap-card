@@ -9,11 +9,9 @@ import { CELL_DIMENSIONS } from '../styles.js';
  */
 export function createMonthHeader(monthGroups, style) {
   const { weekColWidth } = CELL_DIMENSIONS;
-  const primaryTextColor = style.getPropertyValue("--primary-text-color").trim() || "#555";
   
   const monthHeader = createElement('div', {}, {
-    className: 'month-header',
-    style: `color: ${primaryTextColor};`
+    className: 'month-header month-header-spacing'
   });
   
   // Calculate total width to ensure proper alignment

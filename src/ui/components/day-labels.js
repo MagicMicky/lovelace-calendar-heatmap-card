@@ -8,11 +8,8 @@ import { getLocalizedDayNames } from '../../utils/date-utils.js';
  * @returns {HTMLElement} The day labels element
  */
 export function createDayLabels(style, startDayOfWeek = 'monday') {
-  const secondaryTextColor = style.getPropertyValue("--secondary-text-color").trim() || "#888";
-  
   const dayLabels = createElement('div', {}, {
-    className: 'day-labels',
-    style: `color: ${secondaryTextColor};`
+    className: 'day-labels day-label-spacing'
   });
   
   // Get localized day names
@@ -24,7 +21,7 @@ export function createDayLabels(style, startDayOfWeek = 'monday') {
   
   for (let i = 0; i < 7; i++) {
     const label = createElement('div', {}, {
-      className: 'day-label'
+      className: 'day-label',
     });
     
     // Only label specific days
