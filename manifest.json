@@ -1,0 +1,8 @@
+{
+  "domain": "lovelace-calendar-heatmap-card",
+  "name": "Lovelace Calendar Heatmap Card",
+  "version": "1.0.0",
+  "documentation": "https://github.com/MagicMicky/lovelace-calendar-heatmap-card",
+  "codeowners": ["@MagicMicky"],
+  "type": "module"
+}

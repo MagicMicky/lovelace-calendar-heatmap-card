@@ -1,0 +1,149 @@
+import { getGameColor } from '../utils/color-utils.js';
+
+/**
+ * Process history data into daily totals
+ * @param {Array} historyData - History data from Home Assistant
+ * @param {Array} ignoredStates - States to ignore
+ * @returns {Object} Object with daily totals by state
+ */
+export function processDailyTotals(historyData, ignoredStates) {
+  let dailyTotals = {};
+  
+  if (historyData && historyData[0]) {
+    const entityHistory = historyData[0];
+    
+    for (let i = 0; i < entityHistory.length - 1; i++) {
+      const current = entityHistory[i];
+      const next = entityHistory[i + 1];
+      const stateLower = current.state.toLowerCase();
+      
+      if (!ignoredStates.includes(stateLower)) {
+        const startTime = new Date(current.last_changed);
+        const endTime = new Date(next.last_changed);
+        const diffSeconds = (endTime - startTime) / 1000;
+        const dayStr = startTime.toISOString().split("T")[0];
+        
+        if (!dailyTotals[dayStr]) {
+          dailyTotals[dayStr] = {};
+        }
+        
+        const stateName = current.state;
+        dailyTotals[dayStr][stateName] =
+          (dailyTotals[dayStr][stateName] || 0) + diffSeconds;
+      }
+    }
+  }
+  
+  return dailyTotals;
+}
+
+/**
+ * Calculate the maximum daily total seconds
+ * @param {Object} dailyTotals - Daily totals by state
+ * @returns {number} Maximum daily total seconds
+ */
+export function calculateMaxValue(dailyTotals) {
+  let maxValue = 0;
+  
+  for (const dayStr in dailyTotals) {
+    const statesObj = dailyTotals[dayStr];
+    const sumSeconds = Object.values(statesObj).reduce((acc, val) => acc + val, 0);
+    if (sumSeconds > maxValue) maxValue = sumSeconds;
+  }
+  
+  return maxValue;
+}
+
+/**
+ * Build a mapping of games to colors
+ * @param {Object} dailyTotals - Daily totals by state
+ * @returns {Object} Map of game names to colors
+ */
+export function buildGameColorMap(dailyTotals) {
+  // Extract unique game names
+  let gameSet = new Set();
+  for (const day in dailyTotals) {
+    for (const game in dailyTotals[day]) {
+      gameSet.add(game);
+    }
+  }
+  
+  // Create color mapping
+  let gameColorMap = {};
+  Array.from(gameSet).forEach(game => {
+    gameColorMap[game] = getGameColor(game);
+  });
+  
+  return gameColorMap;
+}
+
+/**
+ * Calculate overall totals across all days
+ * @param {Object} dailyTotals - Daily totals by state
+ * @returns {Object} Overall totals by game
+ */
+export function calculateOverallTotals(dailyTotals) {
+  let overallTotals = {};
+  
+  for (const day in dailyTotals) {
+    for (const game in dailyTotals[day]) {
+      overallTotals[game] = (overallTotals[game] || 0) + dailyTotals[day][game];
+    }
+  }
+  
+  return overallTotals;
+}
+
+/**
+ * Find the most played game
+ * @param {Object} overallTotals - Overall totals by game
+ * @returns {Object} Object with bestGame and bestSec properties
+ */
+export function findMostPlayedGame(overallTotals) {
+  let bestGame = "";
+  let bestSec = 0;
+  
+  for (const game in overallTotals) {
+    if (overallTotals[game] > bestSec) {
+      bestSec = overallTotals[game];
+      bestGame = game;
+    }
+  }
+  
+  return { bestGame, bestSec };
+}
+
+/**
+ * Find the dominant game for a day
+ * @param {Object} statesObj - States object for a day
+ * @returns {Object} Object with dominantGame and dominantSec properties
+ */
+export function findDominantGame(statesObj) {
+  let dominantGame = "";
+  let dominantSec = 0;
+  
+  for (const [game, secs] of Object.entries(statesObj)) {
+    if (secs > dominantSec) {
+      dominantSec = secs;
+      dominantGame = game;
+    }
+  }
+  
+  return { dominantGame, dominantSec };
+}
+
+/**
+ * Get color index based on activity level
+ * @param {number} seconds - Seconds of activity
+ * @param {number} maxValue - Maximum value for scaling
+ * @returns {number} Color index (0-4)
+ */
+export function getColorIndex(seconds, maxValue) {
+  if (maxValue <= 0 || seconds <= 0) return 0;
+  
+  const fraction = seconds / maxValue;
+  if (fraction > 0.75) return 4;
+  if (fraction > 0.5) return 3;
+  if (fraction > 0.25) return 2;
+  return 1;
+} 
