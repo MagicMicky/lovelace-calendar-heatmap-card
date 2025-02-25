@@ -4,3 +4,4 @@ services:
     build: .
     volumes:
       - ./dist:/app/dist
+    command: npm run build

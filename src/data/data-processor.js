@@ -7,32 +7,100 @@ import { getGameColor } from '../utils/color-utils.js';
  * @returns {Object} Object with daily totals by state
  */
 export function processDailyTotals(historyData, ignoredStates) {
+  console.log('Calendar Heatmap: Processing history data', historyData);
+  console.log('Calendar Heatmap: Ignored states', ignoredStates);
+  
+  // Log the first few entries of raw history data to understand the structure
+  if (historyData && historyData[0] && historyData[0].length > 0) {
+    console.log('Calendar Heatmap: First 5 raw history entries:');
+    for (let i = 0; i < Math.min(5, historyData[0].length); i++) {
+      console.log(`Entry ${i}:`, JSON.stringify(historyData[0][i]));
+    }
+  }
+  
   let dailyTotals = {};
+  let skippedEntries = 0;
+  let processedEntries = 0;
   
   if (historyData && historyData[0]) {
     const entityHistory = historyData[0];
+    console.log('Calendar Heatmap: Entity history length', entityHistory.length);
     
     for (let i = 0; i < entityHistory.length - 1; i++) {
       const current = entityHistory[i];
       const next = entityHistory[i + 1];
-      const stateLower = current.state.toLowerCase();
       
-      if (!ignoredStates.includes(stateLower)) {
-        const startTime = new Date(current.last_changed);
-        const endTime = new Date(next.last_changed);
-        const diffSeconds = (endTime - startTime) / 1000;
-        const dayStr = startTime.toISOString().split("T")[0];
-        
-        if (!dailyTotals[dayStr]) {
-          dailyTotals[dayStr] = {};
-        }
-        
-        const stateName = current.state;
-        dailyTotals[dayStr][stateName] =
-          (dailyTotals[dayStr][stateName] || 0) + diffSeconds;
+      // Handle both standard and compressed formats
+      // Compressed format uses 's' for state, 'lu' for last_updated/last_changed
+      const currentState = current?.state || current?.s;
+      const currentLastChanged = current?.last_changed || (current?.lu ? new Date(current.lu * 1000).toISOString() : null);
+      const nextLastChanged = next?.last_changed || (next?.lu ? new Date(next.lu * 1000).toISOString() : null);
+      
+      // Skip entries with undefined state
+      if (!currentState || !nextLastChanged) {
+        console.log(`Calendar Heatmap: Skipping entry ${i} - missing required properties`);
+        console.log('Current state:', currentState);
+        console.log('Next last_changed:', nextLastChanged);
+        skippedEntries++;
+        continue;
       }
+      
+      const stateLower = currentState.toLowerCase();
+      
+      // Log the first few entries to understand the data format
+      if (i < 5) {
+        console.log('Calendar Heatmap: Entry', i, 'state:', currentState, 'last_changed:', currentLastChanged);
+      }
+      
+      // Log why an entry is being skipped due to ignored states
+      if (ignoredStates.includes(stateLower)) {
+        console.log(`Calendar Heatmap: Skipping entry ${i} - state "${currentState}" is in ignored_states list`);
+        skippedEntries++;
+        continue;
+      }
+      
+      // Ensure last_changed exists
+      if (!currentLastChanged) {
+        console.log(`Calendar Heatmap: Skipping entry ${i} - missing last_changed`);
+        skippedEntries++;
+        continue;
+      }
+      
+      const startTime = new Date(currentLastChanged);
+      const endTime = new Date(nextLastChanged);
+      
+      // Skip invalid dates
+      if (isNaN(startTime.getTime()) || isNaN(endTime.getTime())) {
+        console.log(`Calendar Heatmap: Skipping entry ${i} - invalid date format`);
+        skippedEntries++;
+        continue;
+      }
+      
+      const diffSeconds = (endTime - startTime) / 1000;
+      
+      // Skip negative or extremely large time differences (more than a day)
+      if (diffSeconds <= 0 || diffSeconds > 86400) {
+        console.log(`Calendar Heatmap: Skipping entry ${i} - invalid time difference: ${diffSeconds} seconds`);
+        skippedEntries++;
+        continue;
+      }
+      
+      const dayStr = startTime.toISOString().split("T")[0];
+      
+      if (!dailyTotals[dayStr]) {
+        dailyTotals[dayStr] = {};
+      }
+      
+      dailyTotals[dayStr][currentState] =
+        (dailyTotals[dayStr][currentState] || 0) + diffSeconds;
+      
+      processedEntries++;
     }
   }
+  
+  console.log('Calendar Heatmap: Processed entries', processedEntries);
+  console.log('Calendar Heatmap: Skipped entries', skippedEntries);
+  console.log('Calendar Heatmap: Daily totals', dailyTotals);
   
   return dailyTotals;
 }

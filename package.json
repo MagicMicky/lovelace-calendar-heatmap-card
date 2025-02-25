@@ -6,14 +6,34 @@
   "module": "dist/calendar-heatmap-card.js",
   "scripts": {
     "build": "rollup -c",
-    "build:watch": "rollup -c -w"
+    "build:watch": "rollup -c -w",
+    "lint": "eslint src/**/*.js",
+    "lint:fix": "eslint src/**/*.js --fix",
+    "test": "jest",
+    "prepare": "husky install"
   },
   "author": "Mickael Goubin",
   "license": "MIT",
+  "dependencies": {
+    "lit": "^2.7.0",
+    "home-assistant-js-websocket": "^8.0.1"
+  },
   "devDependencies": {
+    "@babel/core": "^7.23.5",
+    "@babel/preset-env": "^7.23.5",
+    "@rollup/plugin-babel": "^6.0.4",
+    "@rollup/plugin-node-resolve": "^15.2.3",
     "@rollup/plugin-terser": "^0.4.4",
-    "rollup-plugin-postcss": "^4.0.2",
-    "rollup": "^3.29.5"
+    "eslint": "^8.55.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-import": "^2.29.0",
+    "eslint-plugin-prettier": "^5.0.1",
+    "husky": "^8.0.3",
+    "jest": "^29.7.0",
+    "lint-staged": "^15.2.0",
+    "prettier": "^3.1.0",
+    "rollup": "^3.29.5",
+    "rollup-plugin-postcss": "^4.0.2"
   },
   "repository": {
     "type": "git",
@@ -27,5 +47,11 @@
     "custom-card",
     "calendar",
     "heatmap"
-  ]
+  ],
+  "lint-staged": {
+    "*.js": [
+      "eslint --fix",
+      "prettier --write"
+    ]
+  }
 }

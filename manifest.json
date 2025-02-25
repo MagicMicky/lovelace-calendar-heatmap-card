@@ -7,5 +7,7 @@
   "dependencies": [],
   "codeowners": ["@MagicMicky"],
   "type": "plugin",
-  "render_readme": true
+  "render_readme": true,
+  "homeassistant": "2023.8.0",
+  "issue_tracker": "https://github.com/MagicMicky/lovelace-calendar-heatmap-card/issues"
 }

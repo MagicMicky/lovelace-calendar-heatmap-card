@@ -1,45 +1,93 @@
-import { MATERIAL_COLORS } from '../constants.js';
+/**
+ * Color Utility Functions
+ * 
+ * This module provides utility functions for color manipulation and generation.
+ */
+
+import { MATERIAL_COLORS, THEME_COLORS } from '../constants.js';
 
 /**
- * Get a consistent color for a game name
- * @param {string} gameName - Name of the game
- * @returns {string} Color for the game
+ * Generates a consistent color for a given string (e.g., game name)
+ * Uses a simple hashing algorithm to ensure the same string always gets the same color
+ * 
+ * @param {string} name - The string to generate a color for (e.g., game name)
+ * @returns {string} A hex color code from the MATERIAL_COLORS palette
  */
-export function getGameColor(gameName) {
-  let hash = 0;
-  for (let i = 0; i < gameName.length; i++) {
-    hash = gameName.charCodeAt(i) + ((hash << 5) - hash);
+export function getGameColor(name) {
+  if (!name || typeof name !== 'string') {
+    return MATERIAL_COLORS[0]; // Default to first color for invalid inputs
   }
+  
+  let hash = 0;
+  // Generate a hash value based on the string
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  
+  // Ensure positive hash value
   hash = Math.abs(hash);
+  
+  // Map hash to a color in our palette
   const index = hash % MATERIAL_COLORS.length;
   return MATERIAL_COLORS[index];
 }
 
 /**
- * Adjust a color's intensity based on a factor
- * @param {string} hex - Hex color code
- * @param {number} factor - Intensity factor (0-1)
+ * Adjusts a color's intensity based on a factor and theme
+ * For dark theme: blends between black (0) and the color (1)
+ * For light theme: blends between white (0) and the color (1)
+ * 
+ * @param {string} hex - Hex color code (with or without #)
+ * @param {number} factor - Intensity factor between 0 and 1
  * @param {string} theme - Theme ('dark' or 'light')
- * @returns {string} Adjusted color as RGB
+ * @returns {string} Adjusted color as RGB string
  */
-export function adjustColor(hex, factor, theme = "dark") {
-  if (hex.startsWith("#")) {
-    hex = hex.slice(1);
+export function adjustColor(hex, factor, theme = 'dark') {
+  // Validate inputs
+  if (!hex || typeof hex !== 'string') {
+    return theme === 'dark' ? 'rgb(0, 0, 0)' : 'rgb(255, 255, 255)';
   }
   
-  let r = parseInt(hex.slice(0, 2), 16);
-  let g = parseInt(hex.slice(2, 4), 16);
-  let b = parseInt(hex.slice(4, 6), 16);
+  // Clamp factor between 0 and 1
+  const clampedFactor = Math.max(0, Math.min(1, factor));
   
-  if (theme === "dark") {
-    r = Math.round(0 * (1 - factor) + r * factor);
-    g = Math.round(0 * (1 - factor) + g * factor);
-    b = Math.round(0 * (1 - factor) + b * factor);
-  } else {
-    r = Math.round(255 * (1 - factor) + r * factor);
-    g = Math.round(255 * (1 - factor) + g * factor);
-    b = Math.round(255 * (1 - factor) + b * factor);
+  // Remove # if present
+  const cleanHex = hex.startsWith('#') ? hex.slice(1) : hex;
+  
+  // Parse RGB components
+  let r, g, b;
+  try {
+    r = parseInt(cleanHex.slice(0, 2), 16);
+    g = parseInt(cleanHex.slice(2, 4), 16);
+    b = parseInt(cleanHex.slice(4, 6), 16);
+    
+    // Check if parsing was successful
+    if (isNaN(r) || isNaN(g) || isNaN(b)) {
+      throw new Error('Invalid hex color');
+    }
+  } catch (error) {
+    console.warn(`Invalid hex color: ${hex}. Using fallback.`);
+    return theme === 'dark' ? 'rgb(80, 80, 80)' : 'rgb(200, 200, 200)';
   }
+  
+  // Get the base color for blending based on theme
+  const baseColor = theme === 'dark' ? 0 : 255;
+  
+  // Blend between base color and the provided color based on factor
+  r = Math.round(baseColor * (1 - clampedFactor) + r * clampedFactor);
+  g = Math.round(baseColor * (1 - clampedFactor) + g * clampedFactor);
+  b = Math.round(baseColor * (1 - clampedFactor) + b * clampedFactor);
   
   return `rgb(${r}, ${g}, ${b})`;
+}
+
+/**
+ * Gets the no-data color for the current theme
+ * 
+ * @param {string} theme - Theme ('dark' or 'light')
+ * @returns {string} The no-data color for the theme
+ */
+export function getNoDataColor(theme = 'dark') {
+  return THEME_COLORS[theme]?.noDataColor || 
+    (theme === 'dark' ? '#757575' : '#E0E0E0');
 } 
