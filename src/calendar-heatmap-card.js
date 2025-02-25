@@ -87,12 +87,10 @@ class CalendarHeatmapCard extends HTMLElement {
     styleElement.textContent = getCardStyles(this._config.theme);
     this.shadowRoot.appendChild(styleElement);
 
-    // Create ha-card for standard theming
-    const card = createElement('ha-card', {}, {
-      header: this._config.title || "Calendar Heatmap"
-    });
+    // Create main card container
+    const card = createElement('ha-card', {});
 
-    // Main container
+    // Main content container
     const container = createElement('div', {
       ...COMMON_STYLES.container,
     });
@@ -103,6 +101,14 @@ class CalendarHeatmapCard extends HTMLElement {
       ...COMMON_STYLES.heatmapContainer,
     });
     heatmapContainer.classList.add('heatmap-container');
+
+    // Add title to the left panel
+    const cardHeader = createElement('div', {
+      ...COMMON_STYLES.cardHeader,
+    });
+    cardHeader.classList.add('card-header');
+    cardHeader.textContent = this._config.title || "Calendar Heatmap";
+    heatmapContainer.appendChild(cardHeader);
 
     // Right Panel: Detail View
     const detailView = createElement('div', {

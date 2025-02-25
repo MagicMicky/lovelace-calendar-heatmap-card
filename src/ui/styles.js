@@ -24,29 +24,37 @@ export function getCardStyles(theme) {
       color: var(--primary-text-color, ${primaryTextColor});
       overflow: hidden;
       position: relative;
+      padding: 0;
     }
     .card-content {
       font-family: var(--paper-font-common-base, sans-serif);
       display: flex;
       flex-wrap: wrap;
+      padding: 0;
     }
     .heatmap-container {
       flex: 2;
       min-width: 0;
-      padding-right: 16px;
+      padding: 16px;
+      padding-right: 24px;
       border-right: 1px solid var(--divider-color, #CCC);
     }
     .detail-view {
       flex: 1;
       min-width: 240px;
       padding: 16px;
-      margin-left: 16px;
       background-color: var(--ha-card-background);
       border-radius: 4px;
       box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
       display: flex;
       flex-direction: column;
       overflow: hidden;
+    }
+    .card-header {
+      padding: 16px 16px 0;
+      font-size: 1.2em;
+      font-weight: 500;
+      color: var(--primary-text-color, ${primaryTextColor});
     }
     .detail-view h2 {
       margin-top: 0;
@@ -85,11 +93,11 @@ export function getCardStyles(theme) {
       .heatmap-container {
         border-right: none;
         border-bottom: 1px solid var(--divider-color, #CCC);
-        padding-right: 0;
+        padding-right: 16px;
         margin-bottom: 16px;
       }
       .detail-view {
-        margin-left: 0;
+        margin-top: 0;
       }
     }
   `;
@@ -100,25 +108,31 @@ export function getCardStyles(theme) {
  */
 export const COMMON_STYLES = {
   container: {
-    padding: '16px',
     display: 'flex',
     flexWrap: 'wrap',
+    padding: '0',
   },
   
   heatmapContainer: {
     flex: '2',
     minWidth: '0',
-    paddingRight: '16px',
+    padding: '16px',
+    paddingRight: '24px',
   },
   
   detailView: {
     flex: '1',
     minWidth: '240px',
     padding: '16px',
-    marginLeft: '16px',
     display: 'flex',
     flexDirection: 'column',
     overflow: 'hidden',
+  },
+  
+  cardHeader: {
+    padding: '16px 16px 0',
+    fontSize: '1.2em',
+    fontWeight: '500',
   },
   
   monthHeader: {
