@@ -24,4 +24,5 @@ export const DEFAULT_CONFIG = {
   ignored_states: ["unknown", "idle", "offline", ""],
   refresh_interval: 5 * 60, // seconds
   theme: "dark",
+  start_day_of_week: "monday", // can be "monday" or "sunday"
 }; 

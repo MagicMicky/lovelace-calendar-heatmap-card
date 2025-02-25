@@ -7,11 +7,25 @@ A custom Lovelace card for Home Assistant that visualizes game activity data as 
 - Customizable colors and theming.
 - Dynamically fetches sensor history via Home Assistant API.
 - Modular code structure for easy maintenance and extension.
+- Localized day and month names.
+- Configurable week start day (Monday or Sunday).
 
 ## Installation via HACS
 1. Add this repository as a custom repository in HACS.
 2. Search for "Calendar Heatmap Card" and install it.
 3. Restart Home Assistant.
+
+## Configuration Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `entity` | string | (Required) | Entity ID to display history for |
+| `title` | string | "Game Activity" | Card title |
+| `days_to_show` | number | 365 | Number of days of history to display |
+| `ignored_states` | array | ["unknown", "idle", "offline", ""] | States to ignore in calculations |
+| `refresh_interval` | number | 300 | Refresh interval in seconds |
+| `theme` | string | "dark" | Theme to use ("dark" or "light") |
+| `start_day_of_week` | string | "monday" | Day to start the week on ("monday" or "sunday") |
 
 ## Project Structure
 The project follows a modular architecture:

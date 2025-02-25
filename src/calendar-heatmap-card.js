@@ -143,7 +143,7 @@ class CalendarHeatmapCard extends HTMLElement {
     updateDetailViewWithSummary(detailView, defaultData);
 
     // Build calendar data
-    const startDate = getHeatmapStartDate(this._config.days_to_show);
+    const startDate = getHeatmapStartDate(this._config.days_to_show, this._config.start_day_of_week);
     const weeks = buildWeeksArray(startDate);
     const monthGroups = groupWeeksByMonth(weeks);
 
@@ -156,7 +156,7 @@ class CalendarHeatmapCard extends HTMLElement {
     gridContainer.classList.add('grid-container');
     
     // Day labels column
-    const dayLabels = createDayLabels(getComputedStyle(this));
+    const dayLabels = createDayLabels(getComputedStyle(this), this._config.start_day_of_week);
     gridContainer.appendChild(dayLabels);
 
     // Cell hover handler

@@ -1,17 +1,26 @@
 /**
- * Get the start date for the heatmap (days_to_show days ago, adjusted to previous Sunday)
+ * Get the start date for the heatmap (days_to_show days ago, adjusted to previous Sunday or Monday)
  * @param {number} daysToShow - Number of days to show in the heatmap
+ * @param {string} startDayOfWeek - Day to start the week on ('monday' or 'sunday')
  * @returns {Date} The start date for the heatmap
  */
-export function getHeatmapStartDate(daysToShow) {
+export function getHeatmapStartDate(daysToShow, startDayOfWeek = 'monday') {
   const now = new Date();
   let startDate = new Date(
     now.getTime() - daysToShow * 24 * 60 * 60 * 1000
   );
   
-  // Adjust startDate to the previous Sunday
-  const dayOfWeek = startDate.getDay();
-  startDate.setDate(startDate.getDate() - dayOfWeek);
+  // Adjust startDate to the previous start day of week
+  const dayOfWeek = startDate.getDay(); // 0 = Sunday, 1 = Monday, etc.
+  
+  if (startDayOfWeek === 'monday') {
+    // Adjust to previous Monday (if day is 0/Sunday, go back 6 days, if day is 1/Monday, go back 0 days)
+    const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    startDate.setDate(startDate.getDate() - daysToSubtract);
+  } else {
+    // Adjust to previous Sunday
+    startDate.setDate(startDate.getDate() - dayOfWeek);
+  }
   
   return startDate;
 }
@@ -70,4 +79,28 @@ export function groupWeeksByMonth(weeks) {
   }
   
   return groups;
+}
+
+/**
+ * Get localized day names based on the locale
+ * @param {string} startDayOfWeek - Day to start the week on ('monday' or 'sunday')
+ * @param {string} locale - Locale string (defaults to browser locale)
+ * @returns {Array} Array of day names starting with the specified start day
+ */
+export function getLocalizedDayNames(startDayOfWeek = 'monday', locale = undefined) {
+  const days = [];
+  const date = new Date(2000, 0, 2); // Start with a Sunday (Jan 2, 2000)
+  
+  // If we start with Monday, we need to start with Jan 3, 2000
+  if (startDayOfWeek === 'monday') {
+    date.setDate(3);
+  }
+  
+  // Get 7 days starting from our start day
+  for (let i = 0; i < 7; i++) {
+    days.push(date.toLocaleString(locale, { weekday: 'short' }));
+    date.setDate(date.getDate() + 1);
+  }
+  
+  return days;
 } 
