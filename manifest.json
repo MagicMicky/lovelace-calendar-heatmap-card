@@ -1,8 +1,11 @@
 {
   "domain": "lovelace-calendar-heatmap-card",
   "name": "Lovelace Calendar Heatmap Card",
-  "version": "1.0.0",
+  "version": "3.1.0",
   "documentation": "https://github.com/MagicMicky/lovelace-calendar-heatmap-card",
+  "description": "A Lovelace custom card for Home Assistant showing a calendar heatmap of game activity.",
+  "dependencies": [],
   "codeowners": ["@MagicMicky"],
-  "type": "module"
+  "type": "plugin",
+  "render_readme": true
 }
