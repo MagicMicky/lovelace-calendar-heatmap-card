@@ -10,14 +10,17 @@ import { COMMON_STYLES } from '../styles.js';
  * @returns {HTMLElement} The breakdown item element
  */
 function createBreakdownItem(game, secs, color) {
-  const item = createElement('div', COMMON_STYLES.breakdownItem);
-  
-  const colorSwatch = createElement('div', {
-    ...COMMON_STYLES.colorSwatch,
-    background: color,
+  const item = createElement('div', {}, {
+    className: 'breakdown-item'
   });
   
-  const gameName = createElement('div', COMMON_STYLES.gameName, {
+  const colorSwatch = createElement('div', {}, {
+    className: 'color-swatch',
+    style: `background: ${color};`
+  });
+  
+  const gameName = createElement('div', {}, {
+    className: 'game-name',
     textContent: game,
   });
   
@@ -42,49 +45,36 @@ export function updateDetailViewWithSummary(detailViewElement, defaultData) {
   detailViewElement.innerHTML = '';
   
   // Create content container with proper spacing
-  const contentContainer = createElement('div', {
-    display: 'flex',
-    flexDirection: 'column',
-    flex: '1',
-    overflow: 'hidden',
-    paddingRight: '4px',
+  const contentContainer = createElement('div', {}, {
+    className: 'content-container'
   });
   
   // Create header
-  const header = createElement('h2', { 
-    marginTop: '0',
-    marginBottom: '8px',
-  }, {
+  const header = createElement('h2', {}, {
     textContent: 'Overall Summary',
   });
   
   // Create total
   const totalSeconds = Object.values(defaultData.overallTotals).reduce((a, b) => a + b, 0);
-  const totalElement = createElement('div', {
-    marginBottom: '4px',
-  }, {
+  const totalElement = createElement('div', {}, {
+    className: 'total-element',
     textContent: `Total: ${formatDuration(totalSeconds)}`,
   });
   
   // Create most played
-  const mostPlayedElement = createElement('div', {
-    marginBottom: '12px',
-  }, {
+  const mostPlayedElement = createElement('div', {}, {
+    className: 'dominant-element',
     textContent: `Most Played: ${defaultData.bestGame} (${formatDuration(defaultData.bestSec)})`,
   });
   
   // Create breakdown section
-  const breakdownHeader = createElement('h3', { 
-    marginBottom: '8px',
-    marginTop: '0',
-  }, {
+  const breakdownHeader = createElement('h3', {}, {
     textContent: 'Breakdown',
   });
   
   // Create scrollable breakdown container
-  const breakdownContainer = createElement('div', {
-    overflowY: 'auto',
-    flex: '1',
+  const breakdownContainer = createElement('div', {}, {
+    className: 'breakdown-container'
   });
   
   // Add elements to content container
@@ -115,20 +105,13 @@ export function updateDetailViewWithDayDetails(detailViewElement, data) {
   detailViewElement.innerHTML = '';
   
   // Create content container with proper spacing
-  const contentContainer = createElement('div', {
-    display: 'flex',
-    flexDirection: 'column',
-    flex: '1',
-    overflow: 'hidden',
-    paddingRight: '4px',
+  const contentContainer = createElement('div', {}, {
+    className: 'content-container'
   });
   
   // Create header with formatted date
   const date = new Date(data.date);
-  const header = createElement('h2', { 
-    marginTop: '0',
-    marginBottom: '8px',
-  }, {
+  const header = createElement('h2', {}, {
     textContent: date.toLocaleDateString(undefined, { 
       weekday: 'short', 
       month: 'short', 
@@ -138,9 +121,8 @@ export function updateDetailViewWithDayDetails(detailViewElement, data) {
   
   // Create total
   const totalSeconds = Object.values(data.statesObj).reduce((a, b) => a + b, 0);
-  const totalElement = createElement('div', {
-    marginBottom: '4px',
-  }, {
+  const totalElement = createElement('div', {}, {
+    className: 'total-element',
     textContent: `Total: ${formatDuration(totalSeconds)}`,
   });
   
@@ -155,24 +137,19 @@ export function updateDetailViewWithDayDetails(detailViewElement, data) {
   }
   
   // Create dominant game element
-  const dominantElement = createElement('div', {
-    marginBottom: '12px',
-  }, {
+  const dominantElement = createElement('div', {}, {
+    className: 'dominant-element',
     textContent: `Dominant: ${dominantGame} (${formatDuration(dominantSec)})`,
   });
   
   // Create breakdown section
-  const breakdownHeader = createElement('h3', { 
-    marginBottom: '8px',
-    marginTop: '0',
-  }, {
+  const breakdownHeader = createElement('h3', {}, {
     textContent: 'Breakdown',
   });
   
   // Create scrollable breakdown container
-  const breakdownContainer = createElement('div', {
-    overflowY: 'auto',
-    flex: '1',
+  const breakdownContainer = createElement('div', {}, {
+    className: 'breakdown-container'
   });
   
   // Add elements to content container

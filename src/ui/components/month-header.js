@@ -1,5 +1,5 @@
 import { createElement } from '../../utils/dom-utils.js';
-import { CELL_DIMENSIONS, COMMON_STYLES } from '../styles.js';
+import { CELL_DIMENSIONS } from '../styles.js';
 
 /**
  * Create the month header component
@@ -11,10 +11,9 @@ export function createMonthHeader(monthGroups, style) {
   const { weekColWidth } = CELL_DIMENSIONS;
   const primaryTextColor = style.getPropertyValue("--primary-text-color").trim() || "#555";
   
-  const monthHeader = createElement('div', {
-    ...COMMON_STYLES.monthHeader,
-    color: primaryTextColor,
-    whiteSpace: 'nowrap',
+  const monthHeader = createElement('div', {}, {
+    className: 'month-header',
+    style: `color: ${primaryTextColor};`
   });
   
   // Calculate total width to ensure proper alignment
@@ -24,13 +23,9 @@ export function createMonthHeader(monthGroups, style) {
     const width = group.count * weekColWidth;
     totalWidth += width;
     
-    const label = createElement('div', {
-      width: `${width}px`,
-      textAlign: 'center',
-      display: 'inline-block',
-      overflow: 'hidden',
-      boxSizing: 'border-box',
-    }, {
+    const label = createElement('div', {}, {
+      className: 'month-label',
+      style: `width: ${width}px;`,
       textContent: group.monthName,
     });
     

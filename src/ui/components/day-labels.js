@@ -1,5 +1,4 @@
 import { createElement } from '../../utils/dom-utils.js';
-import { CELL_DIMENSIONS, COMMON_STYLES } from '../styles.js';
 import { getLocalizedDayNames } from '../../utils/date-utils.js';
 
 /**
@@ -9,12 +8,11 @@ import { getLocalizedDayNames } from '../../utils/date-utils.js';
  * @returns {HTMLElement} The day labels element
  */
 export function createDayLabels(style, startDayOfWeek = 'monday') {
-  const { cellWidth, cellMargin } = CELL_DIMENSIONS;
   const secondaryTextColor = style.getPropertyValue("--secondary-text-color").trim() || "#888";
   
-  const dayLabels = createElement('div', {
-    ...COMMON_STYLES.dayLabels,
-    color: secondaryTextColor,
+  const dayLabels = createElement('div', {}, {
+    className: 'day-labels',
+    style: `color: ${secondaryTextColor};`
   });
   
   // Get localized day names
@@ -25,9 +23,8 @@ export function createDayLabels(style, startDayOfWeek = 'monday') {
   const displayIndices = [0, 2, 4];
   
   for (let i = 0; i < 7; i++) {
-    const label = createElement('div', {
-      height: `${cellWidth}px`,
-      marginBottom: `${cellMargin}px`,
+    const label = createElement('div', {}, {
+      className: 'day-label'
     });
     
     // Only label specific days

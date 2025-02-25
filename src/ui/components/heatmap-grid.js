@@ -1,5 +1,5 @@
 import { createElement } from '../../utils/dom-utils.js';
-import { CELL_DIMENSIONS, COMMON_STYLES } from '../styles.js';
+import { CELL_DIMENSIONS } from '../styles.js';
 import { formatDuration } from '../../utils/format-utils.js';
 import { findDominantGame } from '../../data/data-processor.js';
 import { adjustColor } from '../../utils/color-utils.js';
@@ -15,19 +15,16 @@ import { adjustColor } from '../../utils/color-utils.js';
  * @returns {HTMLElement} The heatmap grid element
  */
 export function createHeatmapGrid(weeks, dailyTotals, maxValue, gameColorMap, theme, onCellHover) {
-  const { cellWidth, cellMargin, weekColWidth } = CELL_DIMENSIONS;
+  const { weekColWidth } = CELL_DIMENSIONS;
   
-  const heatmapGrid = createElement('div', {
-    ...COMMON_STYLES.heatmapGrid,
-    minWidth: `${weeks.length * weekColWidth}px`,
+  const heatmapGrid = createElement('div', {}, {
+    className: 'heatmap-grid',
+    style: `min-width: ${weeks.length * weekColWidth}px;`
   });
   
   weeks.forEach((week) => {
-    const col = createElement('div', {
-      ...COMMON_STYLES.weekColumn,
-      marginRight: `${cellMargin}px`,
-      width: `${cellWidth}px`,
-      flexShrink: '0',
+    const col = createElement('div', {}, {
+      className: 'week-column'
     });
     
     // Create one cell per day
@@ -49,15 +46,9 @@ export function createHeatmapGrid(weeks, dailyTotals, maxValue, gameColorMap, th
         const intensity = maxValue > 0 ? dominantSec / maxValue : 0;
         const cellColor = adjustColor(baseColor, intensity, theme);
         
-        cell = createElement('div', {
-          width: `${cellWidth}px`,
-          height: `${cellWidth}px`,
-          marginBottom: `${cellMargin}px`,
-          backgroundColor: cellColor,
-          borderRadius: '2px',
-          cursor: 'pointer',
-          transition: 'box-shadow 0.2s ease',
-          flexShrink: '0',
+        cell = createElement('div', {}, {
+          className: 'day-cell',
+          style: `background-color: ${cellColor};`
         });
         
         // Store data for hover/click
@@ -78,11 +69,8 @@ export function createHeatmapGrid(weeks, dailyTotals, maxValue, gameColorMap, th
           });
         }
       } else {
-        cell = createElement('div', {
-          width: `${cellWidth}px`,
-          height: `${cellWidth}px`,
-          marginBottom: `${cellMargin}px`,
-          flexShrink: '0',
+        cell = createElement('div', {}, {
+          className: 'empty-cell'
         });
       }
       

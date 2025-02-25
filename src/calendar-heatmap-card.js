@@ -13,7 +13,7 @@ import { createMonthHeader } from './ui/components/month-header.js';
 import { createDayLabels } from './ui/components/day-labels.js';
 import { createHeatmapGrid } from './ui/components/heatmap-grid.js';
 import { updateDetailViewWithSummary, updateDetailViewWithDayDetails } from './ui/components/detail-view.js';
-import { getCardStyles, COMMON_STYLES } from './ui/styles.js';
+import { getStyles } from './ui/styles.js';
 
 /**
  * Calendar Heatmap Card
@@ -84,37 +84,33 @@ class CalendarHeatmapCard extends HTMLElement {
 
     // Add styles
     const styleElement = document.createElement("style");
-    styleElement.textContent = getCardStyles(this._config.theme);
+    styleElement.textContent = getStyles(this._config.theme);
     this.shadowRoot.appendChild(styleElement);
 
     // Create main card container
     const card = createElement('ha-card', {});
 
     // Main content container
-    const container = createElement('div', {
-      ...COMMON_STYLES.container,
+    const container = createElement('div', {}, {
+      className: 'card-content'
     });
-    container.classList.add('card-content');
 
     // Left Panel: Heatmap Container
-    const heatmapContainer = createElement('div', {
-      ...COMMON_STYLES.heatmapContainer,
+    const heatmapContainer = createElement('div', {}, {
+      className: 'heatmap-container'
     });
-    heatmapContainer.classList.add('heatmap-container');
 
     // Add title to the left panel
-    const cardHeader = createElement('div', {
-      ...COMMON_STYLES.cardHeader,
+    const cardHeader = createElement('div', {}, {
+      className: 'card-header',
+      textContent: this._config.title || "Calendar Heatmap"
     });
-    cardHeader.classList.add('card-header');
-    cardHeader.textContent = this._config.title || "Calendar Heatmap";
     heatmapContainer.appendChild(cardHeader);
 
     // Right Panel: Detail View
-    const detailView = createElement('div', {
-      ...COMMON_STYLES.detailView,
+    const detailView = createElement('div', {}, {
+      className: 'detail-view'
     });
-    detailView.classList.add('detail-view');
 
     // Fetch and process data
     const historyData = await fetchHistory(
@@ -152,8 +148,9 @@ class CalendarHeatmapCard extends HTMLElement {
     heatmapContainer.appendChild(monthHeader);
 
     // Build Main Grid: Day Labels + Heatmap
-    const gridContainer = createElement('div', COMMON_STYLES.gridContainer);
-    gridContainer.classList.add('grid-container');
+    const gridContainer = createElement('div', {}, {
+      className: 'grid-container'
+    });
     
     // Day labels column
     const dayLabels = createDayLabels(getComputedStyle(this), this._config.start_day_of_week);
@@ -181,28 +178,16 @@ class CalendarHeatmapCard extends HTMLElement {
     heatmapContainer.appendChild(gridContainer);
 
     // Add a subtle label to the detail view to indicate it's secondary
-    const detailHeader = createElement('div', {
-      fontSize: '0.9em',
-      fontWeight: '500',
-      marginBottom: '8px',
-      opacity: '0.7',
-      textTransform: 'uppercase',
-    }, {
+    const detailHeader = createElement('div', {}, {
+      className: 'detail-header',
       textContent: 'Details'
     });
     detailView.insertBefore(detailHeader, detailView.firstChild);
 
     // Version/debug text - positioned at the bottom
     const secondaryTextColor = getComputedStyle(this).getPropertyValue("--secondary-text-color").trim() || "#888";
-    const versionText = createElement('div', {
-      ...COMMON_STYLES.versionText,
-      color: secondaryTextColor,
-      opacity: '0.6',
-      marginTop: 'auto',
-      paddingTop: '8px',
-      borderTop: '1px solid rgba(0,0,0,0.05)',
-      fontSize: '0.7em',
-    }, {
+    const versionText = createElement('div', {}, {
+      className: 'version-text',
       textContent: `Calendar Heatmap Card – Version: ${CARD_VERSION}`
     });
     detailView.appendChild(versionText);
