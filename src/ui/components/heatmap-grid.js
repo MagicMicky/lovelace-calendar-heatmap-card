@@ -78,15 +78,11 @@ export function createHeatmapGrid(
         // Add event listeners
         if (onCellHover) {
           cell.addEventListener('mouseenter', () => {
-            if (!selectedDate) { // Only update on hover if no cell is selected
-              onCellHover(cell._data);
-            }
+            onCellHover(cell._data);
           });
           
           cell.addEventListener('mouseleave', () => {
-            if (!selectedDate) { // Only reset on leave if no cell is selected
-              onCellHover(null);
-            }
+            onCellHover(null);
           });
         }
         

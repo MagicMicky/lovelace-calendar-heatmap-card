@@ -187,6 +187,60 @@ class CalendarHeatmapCard extends LitElement {
     }
   }
 
+  /**
+   * Creates data object for the summary view
+   * @returns {Object} Data for summary view
+   * @private
+   */
+  _createSummaryData() {
+    return {
+      overallTotals: this._overallTotals,
+      gameColorMap: this._gameColorMap,
+      bestGame: this._bestGame,
+      bestSec: this._bestSec
+    };
+  }
+
+  /**
+   * Creates data object for a specific day's details
+   * @param {string} date - The date string (YYYY-MM-DD)
+   * @returns {Object} Data for day details view
+   * @private
+   */
+  _createDayData(date) {
+    return {
+      date: date,
+      statesObj: this._dailyTotals[date] || {},
+      gameColorMap: this._gameColorMap
+    };
+  }
+
+  /**
+   * Updates the detail view based on current state
+   * @param {string|null} dateToShow - Date to show details for, or null for summary
+   * @private
+   */
+  _updateDetailView(dateToShow) {
+    const detailView = this.shadowRoot.querySelector('.detail-view');
+    if (!detailView) return;
+
+    if (dateToShow) {
+      // Show specific day details
+      const dayData = this._createDayData(dateToShow);
+      updateDetailViewWithDayDetails(detailView, dayData);
+    } else {
+      // Show overall summary
+      const summaryData = this._createSummaryData();
+      updateDetailViewWithSummary(detailView, summaryData);
+    }
+  }
+
+  /**
+   * Handles cell hover events
+   * Priority: Hover > Selection > Summary
+   * @param {Object|null} data - Cell data or null when not hovering
+   * @private
+   */
   _onCellHover(data) {
     const detailView = this.shadowRoot.querySelector('.detail-view');
     if (!detailView) return;
@@ -195,45 +249,28 @@ class CalendarHeatmapCard extends LitElement {
       // Always show details for the hovered cell, regardless of selection
       updateDetailViewWithDayDetails(detailView, data);
     } else if (!this._selectedDate) {
-      // Only revert to summary if no cell is selected
-      const defaultData = {
-        overallTotals: this._overallTotals,
-        gameColorMap: this._gameColorMap,
-        bestGame: this._bestGame,
-        bestSec: this._bestSec
-      };
-      updateDetailViewWithSummary(detailView, defaultData);
+      // If no cell is selected and not hovering, show summary
+      this._updateDetailView(null);
     } else {
       // If a cell is selected and we're not hovering, show the selected cell's details
-      const selectedData = {
-        date: this._selectedDate,
-        statesObj: this._dailyTotals[this._selectedDate] || {},
-        gameColorMap: this._gameColorMap
-      };
-      updateDetailViewWithDayDetails(detailView, selectedData);
+      this._updateDetailView(this._selectedDate);
     }
   }
 
+  /**
+   * Handles cell click events
+   * Toggles selection and updates detail view
+   * @param {Object} data - Cell data
+   * @private
+   */
   _onCellClick(data) {
     // If clicking the already selected cell, deselect it
     if (this._selectedDate === data.date) {
       this._selectedDate = null;
-      const defaultData = {
-        overallTotals: this._overallTotals,
-        gameColorMap: this._gameColorMap,
-        bestGame: this._bestGame,
-        bestSec: this._bestSec
-      };
-      const detailView = this.shadowRoot.querySelector('.detail-view');
-      if (detailView) {
-        updateDetailViewWithSummary(detailView, defaultData);
-      }
+      this._updateDetailView(null);
     } else {
       this._selectedDate = data.date;
-      const detailView = this.shadowRoot.querySelector('.detail-view');
-      if (detailView) {
-        updateDetailViewWithDayDetails(detailView, data);
-      }
+      this._updateDetailView(data.date);
     }
     
     // Update the selected cell classes
@@ -302,17 +339,6 @@ class CalendarHeatmapCard extends LitElement {
       className: 'detail-view'
     });
 
-    // Default data for detail view
-    const defaultData = {
-      overallTotals: this._overallTotals,
-      gameColorMap: this._gameColorMap,
-      bestGame: this._bestGame,
-      bestSec: this._bestSec
-    };
-    
-    // Initialize detail view with summary
-    updateDetailViewWithSummary(detailView, defaultData);
-
     // Create UI components
     const monthHeader = createMonthHeader(monthGroups, getComputedStyle(this));
     heatmapContainer.appendChild(monthHeader);
@@ -326,9 +352,14 @@ class CalendarHeatmapCard extends LitElement {
     const dayLabels = createDayLabels(getComputedStyle(this), this._config.start_day_of_week);
     gridContainer.appendChild(dayLabels);
 
+    // Calculate visible weeks based on available space
+    // We'll limit the number of weeks to show to prevent scrolling
+    const maxWeeks = Math.min(weeks.length, 52); // Limit to 52 weeks (1 year) maximum
+    const visibleWeeks = weeks.slice(0, maxWeeks);
+
     // Heatmap grid
     const heatmapGrid = createHeatmapGrid(
-      weeks, 
+      visibleWeeks, 
       this._dailyTotals, 
       this._maxValue, 
       this._gameColorMap, 
@@ -340,20 +371,12 @@ class CalendarHeatmapCard extends LitElement {
     gridContainer.appendChild(heatmapGrid);
     heatmapContainer.appendChild(gridContainer);
 
-    // Add a subtle label to the detail view to indicate it's secondary
-    const detailHeader = createElement('div', {}, {
-      className: 'detail-header',
-      textContent: 'Details'
-    });
-    detailView.insertBefore(detailHeader, detailView.firstChild);
-
-    // Version/debug text - positioned at the bottom
-    const secondaryTextColor = getComputedStyle(this).getPropertyValue("--secondary-text-color").trim() || "#888";
-    const versionText = createElement('div', {}, {
-      className: 'version-text',
-      textContent: `Calendar Heatmap Card – Version: ${CARD_VERSION}`
-    });
-    detailView.appendChild(versionText);
+    // Initialize detail view based on selection state
+    if (this._selectedDate) {
+      this._updateDetailView(this._selectedDate);
+    } else {
+      this._updateDetailView(null);
+    }
 
     // Add panels to container
     container.appendChild(heatmapContainer);

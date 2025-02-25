@@ -52,6 +52,7 @@ export function getStyles(theme) {
       display: flex;
       flex-wrap: wrap;
       padding: 0;
+      height: auto;
     }
     
     /* Layout Containers */
@@ -62,8 +63,8 @@ export function getStyles(theme) {
       padding-right: 24px;
       background-color: var(--ha-card-background);
       min-height: 200px;
-      overflow-x: auto;
-      overflow-y: hidden;
+      overflow: hidden;
+      position: relative;
     }
     
     .detail-view {
@@ -75,7 +76,7 @@ export function getStyles(theme) {
       border-left: 1px solid var(--divider-color, #CCC);
       display: flex;
       flex-direction: column;
-      overflow-y: auto;
+      overflow: hidden;
       opacity: 0.9;
       height: 200px;
       max-height: 200px;
@@ -91,6 +92,9 @@ export function getStyles(theme) {
       left: 0;
       background-color: var(--ha-card-background);
       z-index: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     
     .detail-header {
@@ -99,6 +103,9 @@ export function getStyles(theme) {
       margin-bottom: 8px;
       opacity: 0.7;
       text-transform: uppercase;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     
     .detail-view h2 {
@@ -106,6 +113,9 @@ export function getStyles(theme) {
       margin-bottom: 8px;
       font-size: 1em;
       opacity: 0.9;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     
     .detail-view h3 {
@@ -114,6 +124,9 @@ export function getStyles(theme) {
       margin-top: 0;
       font-size: 0.9em;
       opacity: 0.8;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     
     /* Month Header */
@@ -160,12 +173,14 @@ export function getStyles(theme) {
     .grid-container {
       display: flex;
       min-width: min-content;
+      overflow: hidden;
     }
     
     .heatmap-grid {
       display: flex;
       flex-wrap: nowrap;
       min-width: min-content;
+      overflow: hidden;
     }
     
     .week-column {
@@ -199,18 +214,28 @@ export function getStyles(theme) {
       flex-direction: column;
       flex: 1;
       padding-right: 4px;
+      overflow: hidden;
     }
     
     .total-element {
       margin-bottom: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     
     .dominant-element {
       margin-bottom: 12px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     
     .breakdown-container {
       flex: 1;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
     }
     
     /* Breakdown Items */
@@ -218,12 +243,16 @@ export function getStyles(theme) {
       display: flex;
       align-items: center;
       margin-bottom: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     
     .color-swatch {
       width: 12px;
       height: 12px;
       margin-right: 8px;
+      flex-shrink: 0;
     }
     
     .game-name {
@@ -231,17 +260,7 @@ export function getStyles(theme) {
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-    }
-    
-    /* Misc */
-    .version-text {
-      margin-top: 8px;
-      font-size: 0.8em;
-      opacity: 0.6;
-      margin-top: auto;
-      padding-top: 8px;
-      border-top: 1px solid rgba(0,0,0,0.05);
-      color: var(--heatmap-secondary-text);
+      min-width: 0;
     }
     
     /* Responsive Styles */
@@ -249,20 +268,15 @@ export function getStyles(theme) {
       .card-content {
         flex-direction: column;
       }
+      
       .heatmap-container {
-        border-right: none;
-        border-bottom: 1px solid var(--divider-color, #CCC);
         padding-right: 16px;
-        margin-bottom: 16px;
-        min-height: auto;
       }
+      
       .detail-view {
         max-width: none;
         border-left: none;
-        background-color: var(--ha-card-background);
-        opacity: 1;
-        height: 250px;
-        max-height: 250px;
+        border-top: 1px solid var(--divider-color, #CCC);
       }
     }
 

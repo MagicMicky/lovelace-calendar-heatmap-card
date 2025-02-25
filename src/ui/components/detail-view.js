@@ -77,12 +77,25 @@ export function updateDetailViewWithSummary(detailViewElement, defaultData) {
   contentContainer.appendChild(breakdownHeader);
   contentContainer.appendChild(breakdownContainer);
   
-  // Add breakdown items
+  // Add breakdown items - limit to top 4 to prevent overflow
   const games = Object.entries(defaultData.overallTotals).sort((a, b) => b[1] - a[1]);
-  games.forEach(([game, secs]) => {
+  const maxItems = Math.min(games.length, 4); // Limit to 4 items
+  
+  for (let i = 0; i < maxItems; i++) {
+    const [game, secs] = games[i];
     const item = createBreakdownItem(game, secs, defaultData.gameColorMap[game]);
     breakdownContainer.appendChild(item);
-  });
+  }
+  
+  // If there are more games, add a "more" indicator
+  if (games.length > maxItems) {
+    const moreElement = createElement('div', {}, {
+      className: 'breakdown-item',
+      textContent: `+ ${games.length - maxItems} more...`,
+      style: 'opacity: 0.7; font-style: italic; margin-top: 4px;'
+    });
+    breakdownContainer.appendChild(moreElement);
+  }
   
   // Add content container to detail view
   detailViewElement.appendChild(contentContainer);
@@ -91,7 +104,7 @@ export function updateDetailViewWithSummary(detailViewElement, defaultData) {
 /**
  * Update the detail view with day details
  * @param {HTMLElement} detailViewElement - The detail view element
- * @param {Object} data - Day data
+ * @param {Object} data - Day data with date, statesObj, and gameColorMap
  */
 export function updateDetailViewWithDayDetails(detailViewElement, data) {
   // Clear previous content
@@ -119,16 +132,6 @@ export function updateDetailViewWithDayDetails(detailViewElement, data) {
     textContent: `Total: ${formatDuration(totalSeconds)}`,
   });
   
-  // Find dominant game
-  let dominantGame = "";
-  let dominantSec = 0;
-  for (const [game, secs] of Object.entries(data.statesObj)) {
-    if (secs > dominantSec) {
-      dominantSec = secs;
-      dominantGame = game;
-    }
-  }
-  
   // Create breakdown section
   const breakdownHeader = createElement('h3', {}, {
     textContent: 'Breakdown',
@@ -145,12 +148,25 @@ export function updateDetailViewWithDayDetails(detailViewElement, data) {
   contentContainer.appendChild(breakdownHeader);
   contentContainer.appendChild(breakdownContainer);
   
-  // Add breakdown items
+  // Add breakdown items - limit to top 5 to prevent overflow
   const games = Object.entries(data.statesObj).sort((a, b) => b[1] - a[1]);
-  games.forEach(([game, secs]) => {
+  const maxItems = Math.min(games.length, 5); // Limit to 5 items
+  
+  for (let i = 0; i < maxItems; i++) {
+    const [game, secs] = games[i];
     const item = createBreakdownItem(game, secs, data.gameColorMap[game]);
     breakdownContainer.appendChild(item);
-  });
+  }
+  
+  // If there are more games, add a "more" indicator
+  if (games.length > maxItems) {
+    const moreElement = createElement('div', {}, {
+      className: 'breakdown-item',
+      textContent: `+ ${games.length - maxItems} more...`,
+      style: 'opacity: 0.7; font-style: italic; margin-top: 4px;'
+    });
+    breakdownContainer.appendChild(moreElement);
+  }
   
   // Add content container to detail view
   detailViewElement.appendChild(contentContainer);
