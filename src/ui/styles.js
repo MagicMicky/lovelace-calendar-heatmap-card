@@ -38,6 +38,7 @@ export function getCardStyles(theme) {
       padding: 16px;
       padding-right: 24px;
       background-color: var(--ha-card-background);
+      min-height: 300px;
     }
     .detail-view {
       flex: 1;
@@ -50,6 +51,9 @@ export function getCardStyles(theme) {
       flex-direction: column;
       overflow: hidden;
       opacity: 0.9;
+      height: 300px;
+      max-height: 300px;
+      overflow-y: auto;
     }
     .card-header {
       padding: 16px 16px 8px;
@@ -99,12 +103,15 @@ export function getCardStyles(theme) {
         border-bottom: 1px solid var(--divider-color, #CCC);
         padding-right: 16px;
         margin-bottom: 16px;
+        min-height: auto;
       }
       .detail-view {
         max-width: none;
         border-left: none;
         background-color: var(--ha-card-background);
         opacity: 1;
+        height: 250px;
+        max-height: 250px;
       }
     }
   `;
@@ -126,6 +133,7 @@ export const COMMON_STYLES = {
     padding: '16px',
     paddingRight: '24px',
     backgroundColor: 'var(--ha-card-background)',
+    minHeight: '300px',
   },
   
   detailView: {
@@ -139,6 +147,9 @@ export const COMMON_STYLES = {
     flexDirection: 'column',
     overflow: 'hidden',
     opacity: '0.9',
+    height: '300px',
+    maxHeight: '300px',
+    overflowY: 'auto',
   },
   
   cardHeader: {

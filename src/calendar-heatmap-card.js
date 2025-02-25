@@ -191,12 +191,16 @@ class CalendarHeatmapCard extends HTMLElement {
     });
     detailView.insertBefore(detailHeader, detailView.firstChild);
 
-    // Version/debug text
+    // Version/debug text - positioned at the bottom
     const secondaryTextColor = getComputedStyle(this).getPropertyValue("--secondary-text-color").trim() || "#888";
     const versionText = createElement('div', {
       ...COMMON_STYLES.versionText,
       color: secondaryTextColor,
       opacity: '0.6',
+      marginTop: 'auto',
+      paddingTop: '8px',
+      borderTop: '1px solid rgba(0,0,0,0.05)',
+      fontSize: '0.7em',
     }, {
       textContent: `Calendar Heatmap Card – Version: ${CARD_VERSION}`
     });
