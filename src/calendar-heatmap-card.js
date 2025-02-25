@@ -25,6 +25,7 @@ class CalendarHeatmapCard extends HTMLElement {
     this._hasConnected = false;
     this._interval = null;
     this._selectedDay = null;
+    this._selectedDate = null;
     this.attachShadow({ mode: "open" });
   }
 
@@ -159,10 +160,35 @@ class CalendarHeatmapCard extends HTMLElement {
     // Cell hover handler
     const onCellHover = (data) => {
       if (data) {
+        // Always show details for the hovered cell, regardless of selection
         updateDetailViewWithDayDetails(detailView, data);
-      } else {
+      } else if (!this._selectedDate) {
+        // Only revert to summary if no cell is selected
         updateDetailViewWithSummary(detailView, defaultData);
+      } else {
+        // If a cell is selected and we're not hovering, show the selected cell's details
+        const selectedData = {
+          date: this._selectedDate,
+          statesObj: dailyTotals[this._selectedDate] || {},
+          gameColorMap
+        };
+        updateDetailViewWithDayDetails(detailView, selectedData);
       }
+    };
+
+    // Cell click handler
+    const onCellClick = (data) => {
+      // If clicking the already selected cell, deselect it
+      if (this._selectedDate === data.date) {
+        this._selectedDate = null;
+        updateDetailViewWithSummary(detailView, defaultData);
+      } else {
+        this._selectedDate = data.date;
+        updateDetailViewWithDayDetails(detailView, data);
+      }
+      
+      // Instead of re-rendering the entire component, just update the cell classes
+      this._updateSelectedCellClasses(heatmapGrid, this._selectedDate);
     };
 
     // Heatmap grid
@@ -172,7 +198,9 @@ class CalendarHeatmapCard extends HTMLElement {
       maxValue, 
       gameColorMap, 
       this._config.theme,
-      onCellHover
+      onCellHover,
+      onCellClick,
+      this._selectedDate
     );
     gridContainer.appendChild(heatmapGrid);
     heatmapContainer.appendChild(gridContainer);
@@ -198,6 +226,24 @@ class CalendarHeatmapCard extends HTMLElement {
 
     card.appendChild(container);
     this.shadowRoot.appendChild(card);
+  }
+
+  _updateSelectedCellClasses(heatmapGrid, selectedDate) {
+    // Remove 'selected' class from all cells
+    const allCells = heatmapGrid.querySelectorAll('.day-cell');
+    allCells.forEach(cell => {
+      cell.classList.remove('selected');
+    });
+    
+    // Add 'selected' class to the selected cell
+    if (selectedDate) {
+      const selectedCell = Array.from(allCells).find(cell => 
+        cell._data && cell._data.date === selectedDate
+      );
+      if (selectedCell) {
+        selectedCell.classList.add('selected');
+      }
+    }
   }
 }
 

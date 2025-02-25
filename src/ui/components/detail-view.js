@@ -61,12 +61,6 @@ export function updateDetailViewWithSummary(detailViewElement, defaultData) {
     textContent: `Total: ${formatDuration(totalSeconds)}`,
   });
   
-  // Create most played
-  const mostPlayedElement = createElement('div', {}, {
-    className: 'dominant-element',
-    textContent: `Most Played: ${defaultData.bestGame} (${formatDuration(defaultData.bestSec)})`,
-  });
-  
   // Create breakdown section
   const breakdownHeader = createElement('h3', {}, {
     textContent: 'Breakdown',
@@ -80,7 +74,6 @@ export function updateDetailViewWithSummary(detailViewElement, defaultData) {
   // Add elements to content container
   contentContainer.appendChild(header);
   contentContainer.appendChild(totalElement);
-  contentContainer.appendChild(mostPlayedElement);
   contentContainer.appendChild(breakdownHeader);
   contentContainer.appendChild(breakdownContainer);
   
@@ -136,12 +129,6 @@ export function updateDetailViewWithDayDetails(detailViewElement, data) {
     }
   }
   
-  // Create dominant game element
-  const dominantElement = createElement('div', {}, {
-    className: 'dominant-element',
-    textContent: `Dominant: ${dominantGame} (${formatDuration(dominantSec)})`,
-  });
-  
   // Create breakdown section
   const breakdownHeader = createElement('h3', {}, {
     textContent: 'Breakdown',
@@ -155,7 +142,6 @@ export function updateDetailViewWithDayDetails(detailViewElement, data) {
   // Add elements to content container
   contentContainer.appendChild(header);
   contentContainer.appendChild(totalElement);
-  contentContainer.appendChild(dominantElement);
   contentContainer.appendChild(breakdownHeader);
   contentContainer.appendChild(breakdownContainer);
   

@@ -75,11 +75,10 @@ export function getStyles(theme) {
       border-left: 1px solid var(--divider-color, #CCC);
       display: flex;
       flex-direction: column;
-      overflow: hidden;
+      overflow-y: auto;
       opacity: 0.9;
       height: 200px;
       max-height: 200px;
-      overflow-y: auto;
     }
     
     /* Headers */
@@ -199,7 +198,6 @@ export function getStyles(theme) {
       display: flex;
       flex-direction: column;
       flex: 1;
-      overflow: hidden;
       padding-right: 4px;
     }
     
@@ -212,7 +210,6 @@ export function getStyles(theme) {
     }
     
     .breakdown-container {
-      overflow-y: auto;
       flex: 1;
     }
     
@@ -267,6 +264,19 @@ export function getStyles(theme) {
         height: 250px;
         max-height: 250px;
       }
+    }
+
+    /* Add these styles to the existing CSS */
+
+    .day-cell:hover {
+      box-shadow: 0 0 0 2px rgba(var(--rgb-primary-color, 33, 150, 243), 0.5);
+      z-index: 3;
+    }
+
+    .day-cell.selected {
+      box-shadow: 0 0 0 3px var(--primary-color, #2196F3);
+      z-index: 4;
+      transform: scale(1.1);
     }
   `;
 }

@@ -12,9 +12,20 @@ import { adjustColor } from '../../utils/color-utils.js';
  * @param {Object} gameColorMap - Map of game names to colors
  * @param {string} theme - Theme ('dark' or 'light')
  * @param {Function} onCellHover - Callback for cell hover
+ * @param {Function} onCellClick - Callback for cell click
+ * @param {string|null} selectedDate - Currently selected date (YYYY-MM-DD)
  * @returns {HTMLElement} The heatmap grid element
  */
-export function createHeatmapGrid(weeks, dailyTotals, maxValue, gameColorMap, theme, onCellHover) {
+export function createHeatmapGrid(
+  weeks, 
+  dailyTotals, 
+  maxValue, 
+  gameColorMap, 
+  theme, 
+  onCellHover,
+  onCellClick,
+  selectedDate
+) {
   const { weekColWidth } = CELL_DIMENSIONS;
   
   const heatmapGrid = createElement('div', {}, {
@@ -46,8 +57,14 @@ export function createHeatmapGrid(weeks, dailyTotals, maxValue, gameColorMap, th
         const intensity = maxValue > 0 ? dominantSec / maxValue : 0;
         const cellColor = adjustColor(baseColor, intensity, theme);
         
+        // Create cell with appropriate class
+        const classNames = ['day-cell'];
+        if (selectedDate === dayStr) {
+          classNames.push('selected');
+        }
+        
         cell = createElement('div', {}, {
-          className: 'day-cell',
+          className: classNames.join(' '),
           style: `background-color: ${cellColor};`
         });
         
@@ -61,11 +78,22 @@ export function createHeatmapGrid(weeks, dailyTotals, maxValue, gameColorMap, th
         // Add event listeners
         if (onCellHover) {
           cell.addEventListener('mouseenter', () => {
-            onCellHover(cell._data);
+            if (!selectedDate) { // Only update on hover if no cell is selected
+              onCellHover(cell._data);
+            }
           });
           
           cell.addEventListener('mouseleave', () => {
-            onCellHover(null);
+            if (!selectedDate) { // Only reset on leave if no cell is selected
+              onCellHover(null);
+            }
+          });
+        }
+        
+        // Add click listener
+        if (onCellClick) {
+          cell.addEventListener('click', () => {
+            onCellClick(cell._data);
           });
         }
       } else {
