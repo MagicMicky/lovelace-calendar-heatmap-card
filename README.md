@@ -12,12 +12,14 @@ A custom Lovelace card for Home Assistant that visualizes entity activity data a
 
 - 📅 Displays historical activity data on a calendar grid
 - 🎮 Perfect for tracking game activity, device usage, or any time-based data
-- 🎨 Customizable colors and theming (light/dark mode support)
+- 🎨 Advanced theme-aware colors that automatically adapt to light/dark modes
+- 🌈 Intelligent color intensity scaling for better visual differentiation
 - 🔄 Auto-refreshes data at configurable intervals
 - 📊 Detailed breakdown of activity on hover and click
 - 🌐 Localized day and month names
 - 📱 Responsive design for both desktop and mobile
 - 🗓️ Configurable week start day (Monday or Sunday)
+- 🛡️ Robust error handling for improved reliability
 
 ## Installation
 
@@ -54,7 +56,6 @@ type: custom:calendar-heatmap-card
 entity: sensor.game_activity
 title: My Gaming Activity
 days_to_show: 365
-theme: dark
 ```
 
 ### Configuration Options
@@ -66,8 +67,8 @@ theme: dark
 | `days_to_show` | number | 365 | Number of days of history to display |
 | `ignored_states` | array | ["unknown", "idle", "offline", ""] | States to ignore in calculations |
 | `refresh_interval` | number | 300 | Refresh interval in seconds |
-| `theme` | string | "dark" | Theme to use ("dark" or "light") |
 | `start_day_of_week` | string | "monday" | Day to start the week on ("monday" or "sunday") |
+| `include_unknown` | boolean | false | Whether to include "unknown" state in calculations |
 
 ### Example Configurations
 
@@ -85,14 +86,50 @@ entity: sensor.steam_activity
 title: Steam Gaming Activity
 days_to_show: 180
 ignored_states:
-  - unknown
   - idle
   - offline
   - ""
 refresh_interval: 600
-theme: light
 start_day_of_week: sunday
+include_unknown: true
 ```
+
+## Theming
+
+The Calendar Heatmap Card now features advanced theme-aware color handling that automatically adapts to your Home Assistant theme. The card will detect whether you're using a light or dark theme and adjust colors accordingly for optimal visibility.
+
+### Custom Theme Variables
+
+You can customize the appearance of the heatmap by adding these variables to your Home Assistant theme:
+
+```yaml
+calendar-heatmap-no-data-color: "#ebedf0"  # Color for days with no data
+calendar-heatmap-level-1: "#c6e48b"        # Color for lowest activity level
+calendar-heatmap-level-2: "#7bc96f"        # Color for low-medium activity level
+calendar-heatmap-level-3: "#239a3b"        # Color for medium-high activity level
+calendar-heatmap-level-4: "#196127"        # Color for highest activity level
+```
+
+If these variables are not defined, the card will fall back to using Home Assistant's standard theme colors:
+
+- `--disabled-text-color` for no data
+- `--success-color` for level 1
+- `--primary-color` for level 2
+- `--accent-color` for level 3
+- `--state-active-color` for level 4
+
+### Visual Differentiation
+
+The card now uses an improved intensity scaling algorithm that provides better visual differentiation between different activity durations:
+
+- Very short sessions (< 15 min)
+- Short sessions (15-45 min)
+- Medium sessions (45 min - 2 hours)
+- Longer sessions (2-4 hours)
+- High usage sessions (4-8 hours)
+- Very high usage sessions (8+ hours)
+
+This makes it easier to distinguish between days with different levels of activity at a glance.
 
 ## Entity Requirements
 
@@ -131,7 +168,6 @@ ignored_states:
   - dnd
   - online
 refresh_interval: 300
-theme: dark
 start_day_of_week: monday
 ```
 
@@ -150,6 +186,24 @@ This gives you a beautiful visualization of your gaming habits over time, showin
 ![Discord Gaming Activity Example](https://raw.githubusercontent.com/MagicMicky/lovelace-calendar-heatmap-card/main/docs/images/discord-example.png)
 *Example of Discord gaming activity visualization (you may want to replace this with your own screenshot)*
 
+## Troubleshooting
+
+### Common Issues
+
+#### No Data Showing
+- Ensure your entity has historical data in Home Assistant
+- Check that the entity states aren't all in the `ignored_states` list
+- Verify that `days_to_show` isn't set too low
+
+#### Colors Not Matching Theme
+- Make sure you're using a recent version of Home Assistant
+- Try adding the custom theme variables mentioned in the Theming section
+- Check if your theme properly defines the fallback variables
+
+#### Performance Issues
+- Try reducing `days_to_show` to display fewer days
+- Increase `refresh_interval` to reduce update frequency
+
 ## Development
 
 ### Project Structure
@@ -166,7 +220,8 @@ src/
 │   ├── color-utils.js        # Color manipulation helpers
 │   └── dom-utils.js          # DOM manipulation helpers
 ├── services/                 # External services
-│   └── history-service.js    # History data fetching
+│   ├── history-service.js    # History data fetching
+│   └── entity-subscription.js # Entity state subscription
 ├── data/                     # Data processing
 │   └── data-processor.js     # Data transformation logic
 └── ui/                       # UI components
