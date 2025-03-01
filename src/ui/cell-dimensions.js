@@ -7,5 +7,5 @@ export const CELL_DIMENSIONS = {
   cellMargin: 3,
   get weekColWidth() {
     return this.cellWidth + this.cellMargin;
-  }
-}; 
+  },
+};
