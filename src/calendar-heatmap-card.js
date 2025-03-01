@@ -33,6 +33,7 @@ class CalendarHeatmapCard extends LitElement {
       _overallTotals: { type: Object },
       _bestGame: { type: String },
       _bestSec: { type: Number },
+      _isLoading: { type: Boolean },
     };
   }
 
@@ -77,6 +78,7 @@ class CalendarHeatmapCard extends LitElement {
         background: var(--heatmap-card-background);
         /* Fixed height for the card */
         height: var(--heatmap-card-height);
+        position: relative;
       }
       
       .card-content {
@@ -86,6 +88,24 @@ class CalendarHeatmapCard extends LitElement {
         height: 100%;
         box-sizing: border-box;
         font-family: var(--primary-font-family, var(--paper-font-common-base));
+      }
+      
+      .loading-container {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: rgba(var(--rgb-card-background-color, 0, 0, 0), 0.3);
+        z-index: 2;
+        backdrop-filter: blur(2px);
+      }
+      
+      .loading {
+        opacity: 0.6;
       }
       
       .heatmap-container {
@@ -196,6 +216,7 @@ class CalendarHeatmapCard extends LitElement {
     this._lastEntityState = null;
     this._lastHistoryTimestamp = 0;
     this._themeObserver = null; // MutationObserver for theme changes
+    this._isLoading = false;
   }
 
   setConfig(config) {
@@ -218,14 +239,43 @@ class CalendarHeatmapCard extends LitElement {
     const oldHass = this._hass;
     this._hass = hass;
     
-    // Only fetch data on first connection or if hass connection changes
-    // The subscription will handle updates when the entity state changes
-    if (!oldHass || !this._hasConnected) {
-      this._fetchData();
-      
-      // If we already have a connection, make sure our subscription is using it
-      if (this._hasConnected) {
-        this._setupSubscription();
+    if (!this._config || !this._config.entity) return;
+    
+    // Get current entity state
+    const entityState = hass.states[this._config.entity];
+    if (!entityState) return;
+    
+    // Check if this is a meaningful state change
+    const oldEntityState = oldHass?.states[this._config.entity];
+    const stateChanged = 
+      !oldEntityState || 
+      entityState.state !== oldEntityState.state ||
+      entityState.last_changed !== oldEntityState.last_changed;
+    
+    if (stateChanged) {
+      // Only update if entity state has actually changed
+      this._handleEntityUpdate(entityState);
+    }
+  }
+  
+  _handleEntityUpdate(entityState) {
+    // Update immediate UI if needed
+    this._currentState = entityState.state;
+    
+    // Only fetch history if enough time has passed since last fetch
+    const now = Date.now();
+    const timeSinceLastFetch = now - (this._lastHistoryTimestamp || 0);
+    const minTimeBetweenFetches = 60000; // 1 minute minimum between fetches
+    
+    if (timeSinceLastFetch > minTimeBetweenFetches) {
+      this._fetchHistoryData();
+    } else {
+      // Schedule a fetch after the minimum time has passed
+      if (!this._pendingFetch) {
+        this._pendingFetch = setTimeout(() => {
+          this._fetchHistoryData();
+          this._pendingFetch = null;
+        }, minTimeBetweenFetches - timeSinceLastFetch);
       }
     }
   }
@@ -239,7 +289,11 @@ class CalendarHeatmapCard extends LitElement {
     this._hasConnected = true;
     
     if (this._hass) {
-      this._setupSubscription();
+      // Initial data fetch
+      this._fetchHistoryData();
+      
+      // Set up refresh timer
+      this._setupRefreshTimer();
     }
     
     // Set up theme observer
@@ -248,10 +302,63 @@ class CalendarHeatmapCard extends LitElement {
 
   disconnectedCallback() {
     super.disconnectedCallback();
-    this._unsubscribeFromEntity();
+    
+    // Clean up timers
+    this._clearRefreshTimer();
+    
+    // Clean up entity subscription if exists
+    if (this._unsubscribe) {
+      this._unsubscribe();
+      this._unsubscribe = null;
+    }
+    
+    // Clear any cached data to prevent memory leaks
+    this._dailyTotals = null;
+    this._gameColorMap = null;
+    this._overallTotals = null;
     
     // Clean up theme observer
     this._removeThemeObserver();
+  }
+  
+  /**
+   * Sets up a timer to periodically refresh the history data
+   * @private
+   */
+  _setupRefreshTimer() {
+    // Clear existing timer
+    this._clearRefreshTimer();
+    
+    // Set up new timer if refresh_interval is valid
+    const interval = this._config.refresh_interval || 600; // Default 10 minutes
+    if (interval > 0) {
+      // Add a small random offset to prevent all cards refreshing simultaneously
+      const randomOffset = Math.floor(Math.random() * 10000); // Random 0-10 second offset
+      
+      this._refreshTimerId = window.setTimeout(() => {
+        this._fetchHistoryData();
+        // Set up recurring interval after first fetch
+        this._refreshTimerId = window.setInterval(() => {
+          this._fetchHistoryData();
+        }, interval * 1000);
+      }, randomOffset);
+    }
+  }
+  
+  /**
+   * Clears any active refresh timers
+   * @private
+   */
+  _clearRefreshTimer() {
+    if (this._refreshTimerId) {
+      clearInterval(this._refreshTimerId);
+      this._refreshTimerId = null;
+    }
+    
+    if (this._pendingFetch) {
+      clearTimeout(this._pendingFetch);
+      this._pendingFetch = null;
+    }
   }
   
   /**
@@ -328,7 +435,7 @@ class CalendarHeatmapCard extends LitElement {
             const refreshInterval = (this._config.refresh_interval || 300) * 1000; // Convert to ms
             
             if (now - this._lastHistoryTimestamp > refreshInterval) {
-              this._fetchData();
+              this._fetchHistoryData();
             }
           }
         }
@@ -343,10 +450,17 @@ class CalendarHeatmapCard extends LitElement {
     }
   }
 
-  async _fetchData() {
-    if (!this._hass || !this._config) return;
+  async _fetchHistoryData() {
+    if (!this._hass || !this._config || !this._config.entity) return;
     
     try {
+      // Update timestamp before fetch to prevent duplicate requests
+      this._lastHistoryTimestamp = Date.now();
+      
+      // Show loading state if needed
+      this._isLoading = true;
+      this.requestUpdate();
+      
       // Get history data for the entity
       const startDate = getHeatmapStartDate(this._config.days_to_show, this._config.start_day_of_week);
       const endDate = new Date(); // Current time
@@ -359,31 +473,35 @@ class CalendarHeatmapCard extends LitElement {
         endDate
       );
       
-      // Process the data
-      const ignoredStates = this._config.ignored_states || [];
-      this._dailyTotals = processDailyTotals(historyData, ignoredStates);
-      this._maxValue = calculateMaxValue(this._dailyTotals);
-      
-      // Create a color map for games/states
-      const states = Object.values(this._dailyTotals)
-        .flatMap(day => Object.keys(day))
-        .filter(state => !ignoredStates.includes(state));
-      
-      this._gameColorMap = buildGameColorMap(states);
-      
-      // Calculate overall totals and find the most played game
-      this._overallTotals = calculateOverallTotals(this._dailyTotals);
-      const { dominantGame, dominantSec } = findMostPlayedGame(this._overallTotals);
-      this._bestGame = dominantGame;
-      this._bestSec = dominantSec;
-      
-      // Update timestamp of last history fetch
-      this._lastHistoryTimestamp = Date.now();
-      
-      // Request an update to re-render with new data
-      this.requestUpdate();
+      // Process data only if we got a valid response
+      if (historyData && historyData.length > 0) {
+        // Process the data
+        const ignoredStates = this._config.ignored_states || [];
+        this._dailyTotals = processDailyTotals(historyData, ignoredStates);
+        this._maxValue = calculateMaxValue(this._dailyTotals);
+        
+        // Create a list of all unique states/games
+        const allStates = [];
+        for (const day in this._dailyTotals) {
+          allStates.push(...Object.keys(this._dailyTotals[day]));
+        }
+        
+        // Filter out ignored states and create a unique set
+        const uniqueStates = [...new Set(allStates)].filter(state => !ignoredStates.includes(state));
+        
+        // Build color map and calculate totals
+        this._gameColorMap = buildGameColorMap(uniqueStates);
+        this._overallTotals = calculateOverallTotals(this._dailyTotals);
+        const { dominantGame, dominantSec } = findMostPlayedGame(this._overallTotals);
+        this._bestGame = dominantGame;
+        this._bestSec = dominantSec;
+      }
     } catch (error) {
       console.error("Calendar Heatmap: Error fetching history data", error);
+    } finally {
+      // Always clear loading state
+      this._isLoading = false;
+      this.requestUpdate();
     }
   }
 
@@ -458,9 +576,17 @@ class CalendarHeatmapCard extends LitElement {
     const dayData = this._selectedDate ? this._createDayData(this._selectedDate) : null;
     const summaryData = this._createSummaryData();
 
+    // Show loading indicator when fetching data
+    const loadingIndicator = this._isLoading ? 
+      html`<div class="loading-container">
+        <ha-circular-progress active></ha-circular-progress>
+      </div>` : 
+      html``;
+
     return html`
       <ha-card>
-        <div class="card-content">
+        ${loadingIndicator}
+        <div class="card-content ${this._isLoading ? 'loading' : ''}">
           <!-- Left Panel: Heatmap Container -->
           <div class="heatmap-container">
             <div class="card-header">${this._config.title || "Calendar Heatmap"}</div>

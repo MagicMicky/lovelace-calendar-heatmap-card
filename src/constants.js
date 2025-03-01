@@ -38,7 +38,7 @@ export const DEFAULT_CONFIG = {
   title: 'Game Activity',
   days_to_show: 365,
   ignored_states: ['unknown', 'idle', 'offline', ''],
-  refresh_interval: 5 * 60, // seconds
+  refresh_interval: 10 * 60, // 10 minutes in seconds
   start_day_of_week: 'monday', // can be "monday" or "sunday"
 };
 
