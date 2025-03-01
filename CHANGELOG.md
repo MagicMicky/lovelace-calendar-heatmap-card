@@ -1,3 +1,12 @@
+## [3.4.1](https://github.com/MagicMicky/lovelace-calendar-heatmap-card/compare/v3.4.0...v3.4.1) (2025-03-01)
+
+
+### Bug Fixes
+
+* ci for hacs + readme ([ab22aee](https://github.com/MagicMicky/lovelace-calendar-heatmap-card/commit/ab22aee83f342ff2837ebac9b8ce20f7e71dd370))
+* hacs.json ([39eb418](https://github.com/MagicMicky/lovelace-calendar-heatmap-card/commit/39eb418b0c2653ab8e861f80b039a8800e1e8f89))
+* update hacs.json to use category instead of type ([19aeecd](https://github.com/MagicMicky/lovelace-calendar-heatmap-card/commit/19aeecde3efe14c6dc4681622dddeb2a4d1415a9))
+
 # [3.4.0](https://github.com/MagicMicky/lovelace-calendar-heatmap-card/compare/v3.3.0...v3.4.0) (2025-03-01)
 
 
