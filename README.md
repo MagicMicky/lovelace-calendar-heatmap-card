@@ -9,7 +9,7 @@
 
 A custom Lovelace card for Home Assistant that visualizes entity activity data as a calendar heatmap, similar to GitHub's contribution graph. Perfect for tracking game activity, device usage, or any time-based data.
 
-![Calendar Heatmap Card](https://raw.githubusercontent.com/MagicMicky/lovelace-calendar-heatmap-card/main/docs/images/card-preview.png)
+![Calendar Heatmap Card](https://raw.githubusercontent.com/MagicMicky/lovelace-calendar-heatmap-card/main/docs/images/calendar-heatmap.png)
 
 ## Features
 
@@ -209,8 +209,8 @@ The Calendar Heatmap Card will:
 
 This gives you a beautiful visualization of your gaming habits over time, showing which days you played the most and which games dominated your play time.
 
-![Discord Gaming Activity Example](https://raw.githubusercontent.com/MagicMicky/lovelace-calendar-heatmap-card/main/docs/images/discord-example.png)
-*Example of Discord gaming activity visualization (you may want to replace this with your own screenshot)*
+![Discord Gaming Activity Example](https://raw.githubusercontent.com/MagicMicky/lovelace-calendar-heatmap-card/main/docs/images/calendar-heatmap.png)
+*Example of Discord gaming activity visualization*
 
 ## Troubleshooting
 
