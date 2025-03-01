@@ -69,7 +69,6 @@ days_to_show: 365
 |--------|------|---------|-------------|
 | `entity` | string | (Required) | Entity ID to display history for |
 | `title` | string | "Game Activity" | Card title |
-| `days_to_show` | number | 365 | Number of days of history to display (Note: In v3.3.0+, the actual display is automatically adjusted based on available space) |
 | `ignored_states` | array | ["unknown", "idle", "offline", ""] | States to ignore in calculations |
 | `refresh_interval` | number | 300 | Refresh interval in seconds |
 | `start_day_of_week` | string | "monday" | Day to start the week on ("monday" or "sunday") |
