@@ -102,4 +102,67 @@ Update the README.md file if you add new features or configuration options.
 
 ## License
 
-By contributing, you agree that your contributions will be licensed under the project's MIT License. 
+By contributing, you agree that your contributions will be licensed under the project's MIT License.
+
+## Release Process
+
+This project uses [semantic-release](https://github.com/semantic-release/semantic-release) to automate the release process. The release is triggered automatically when commits are pushed to the `main` branch.
+
+### Commit Message Format
+
+We follow the [Conventional Commits](https://www.conventionalcommits.org/) specification for commit messages. This allows us to automatically determine the next version number and generate changelogs.
+
+The commit message should be structured as follows:
+
+```
+<type>(<scope>): <description>
+
+[optional body]
+
+[optional footer(s)]
+```
+
+The `type` must be one of the following:
+
+- `feat`: A new feature (triggers a MINOR version bump)
+- `fix`: A bug fix (triggers a PATCH version bump)
+- `docs`: Documentation only changes
+- `style`: Changes that do not affect the meaning of the code
+- `refactor`: A code change that neither fixes a bug nor adds a feature
+- `perf`: A code change that improves performance
+- `test`: Adding missing tests or correcting existing tests
+- `chore`: Changes to the build process or auxiliary tools and libraries
+
+If the commit introduces a breaking change, the footer should contain `BREAKING CHANGE:` followed by a description of the change. This will trigger a MAJOR version bump.
+
+Examples:
+
+```
+feat(calendar): add week number display
+```
+
+```
+fix(heatmap): correct color calculation for empty days
+```
+
+```
+feat(api): support new Home Assistant sensor format
+
+BREAKING CHANGE: The sensor data format has changed and requires Home Assistant 2023.8.0 or newer
+```
+
+### Release Workflow
+
+The release workflow is as follows:
+
+1. Commits are pushed to the `main` branch
+2. GitHub Actions runs the CI workflow to validate the code
+3. If the CI passes, the release workflow is triggered
+4. semantic-release determines the next version number based on the commit messages
+5. The version is updated in all relevant files
+6. The changelog is generated
+7. The code is built and packaged
+8. A new GitHub release is created with the appropriate tag
+9. The release assets are uploaded to the GitHub release
+
+You don't need to manually create releases or update version numbers. Just follow the commit message format and the rest will be handled automatically. 
