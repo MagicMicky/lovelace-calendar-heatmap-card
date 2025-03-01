@@ -307,7 +307,11 @@ This project uses semantic-release for automated versioning and releases. For th
    mkdir -p scripts
    chmod +x scripts/update-version.js
    ```
-4. Write commit messages following the [Conventional Commits](https://www.conventionalcommits.org/) format:
+4. Set up Git hooks properly (especially if you're using nvm):
+   ```bash
+   npm run setup-hooks
+   ```
+5. Write commit messages following the [Conventional Commits](https://www.conventionalcommits.org/) format:
    - `feat: ...` for new features (minor version bump)
    - `fix: ...` for bug fixes (patch version bump)
    - Include `BREAKING CHANGE:` in the commit message for major version bumps

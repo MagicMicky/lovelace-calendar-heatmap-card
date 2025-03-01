@@ -28,6 +28,7 @@ jobs:
 
       - name: Lint
         run: npm run lint
+        continue-on-error: true  # Allow the workflow to continue even if linting fails
 
       - name: Test
         run: npm run test

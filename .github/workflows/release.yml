@@ -27,6 +27,11 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      # Add a linting step with continue-on-error
+      - name: Lint
+        run: npm run lint
+        continue-on-error: true
+
       - name: Build
         run: npm run build
 
