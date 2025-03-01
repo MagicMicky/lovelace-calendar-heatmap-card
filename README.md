@@ -264,29 +264,18 @@ src/
     └── styles.js             # Styles and theme handling
 ```
 
-### Building the Project
+### Setup
 
-#### Using Docker (Recommended)
-```bash
-# Ensure you're in the docker group
-newgrp docker
-
-# Build the project
-docker build -t calendar-heatmap-card .
-docker run --rm -v $(pwd)/dist:/app/dist calendar-heatmap-card
-```
-
-#### Using npm
-```bash
-# Install dependencies
-npm install
-
-# Build the project
-npm run build
-
-# For development with auto-rebuild
-npm run build:watch
-```
+1. Clone the repository
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+   This will also generate a `package-lock.json` file which is important for CI/CD.
+3. Build the project:
+   ```bash
+   npm run build
+   ```
 
 ### Contributing
 
@@ -306,3 +295,21 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - Inspired by GitHub's contribution calendar
 - Built for the Home Assistant community
+
+## Automated Releases
+
+This project uses semantic-release for automated versioning and releases. For this to work properly:
+
+1. Create a GitHub Personal Access Token with `repo` scope
+2. Add this token as a repository secret named `GH_TOKEN` in your GitHub repository settings
+3. Ensure the `scripts` directory exists and the update script is executable:
+   ```bash
+   mkdir -p scripts
+   chmod +x scripts/update-version.js
+   ```
+4. Write commit messages following the [Conventional Commits](https://www.conventionalcommits.org/) format:
+   - `feat: ...` for new features (minor version bump)
+   - `fix: ...` for bug fixes (patch version bump)
+   - Include `BREAKING CHANGE:` in the commit message for major version bumps
+
+See the [CONTRIBUTING.md](CONTRIBUTING.md) file for more details on the release process.

@@ -33,7 +33,7 @@
       {
         "assets": [
           {"path": "dist/calendar-heatmap-card.js", "label": "Calendar Heatmap Card (js)"},
-          {"path": "dist/calendar-heatmap-card.js.gz", "label": "Calendar Heatmap Card (js.gz)"}
+          {"path": "dist/calendar-heatmap-card.js.gz", "label": "Calendar Heatmap Card (js.gz)", "missing": true}
         ]
       }
     ]
