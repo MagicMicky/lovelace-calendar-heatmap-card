@@ -13,77 +13,85 @@ export class DetailView extends LitElement {
       dayData: { type: Object },
       summaryData: { type: Object },
       showSummary: { type: Boolean },
+      _showAllGames: { type: Boolean, state: true },
+      _maxGamesToShow: { type: Number, state: true }
     };
   }
 
   static get styles() {
     return css`
       :host {
-        display: block;
-      }
-      
-      .detail-view {
         display: flex;
         flex-direction: column;
-        overflow: hidden;
         height: 100%;
+        overflow: hidden;
       }
       
-      .detail-content {
+      /* Content area with scrolling */
+      .content-area {
         flex: 1;
         overflow-y: auto;
         overflow-x: hidden;
       }
       
-      .detail-header {
+      /* Button area */
+      .button-area {
+        flex-shrink: 0;
+        display: flex;
+        justify-content: center;
+        padding: 0 8px 0px 8px;
+      }
+      
+      /* Text elements */
+      .header {
         font-size: 0.9em;
         font-weight: 500;
         margin-bottom: 8px;
         opacity: 0.7;
         text-transform: uppercase;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
       }
       
-      .detail-date {
+      .date {
         font-size: 1.1em;
         font-weight: 500;
-        margin-bottom: 12px;
+        margin-bottom: 8px;
         color: var(--primary-text-color);
       }
       
-      .detail-total {
+      .total {
         font-size: 0.9em;
-        margin-bottom: 16px;
+        margin-bottom: 12px;
         color: var(--secondary-text-color);
       }
       
-      .detail-games {
+      .games-list {
         margin-top: 8px;
       }
       
+      /* Game item */
       .game-item {
         display: flex;
         align-items: center;
-        margin-bottom: 8px;
-        padding-bottom: 8px;
+        margin-bottom: 6px;
+        padding-bottom: 6px;
         border-bottom: 1px solid var(--divider-color);
       }
       
       .game-item:last-child {
         border-bottom: none;
+        margin-bottom: 0;
       }
       
-      .game-color {
+      .color-indicator {
         width: 12px;
         height: 12px;
         border-radius: 3px;
         margin-right: 8px;
         flex-shrink: 0;
+        border: 1px solid rgba(0,0,0,0.1);
       }
       
-      .game-name {
+      .name {
         flex: 1;
         font-size: 0.9em;
         white-space: nowrap;
@@ -92,37 +100,70 @@ export class DetailView extends LitElement {
         color: var(--primary-text-color);
       }
       
-      .game-time {
+      .time {
         font-size: 0.8em;
         color: var(--secondary-text-color);
         margin-left: 8px;
         flex-shrink: 0;
       }
       
-      .summary-percentage {
+      .percentage {
         font-size: 0.75em;
         color: var(--secondary-text-color);
         margin-left: 4px;
         flex-shrink: 0;
       }
       
-      .no-data-message {
+      .no-data {
         color: var(--secondary-text-color);
         font-style: italic;
         text-align: center;
         margin-top: 16px;
       }
       
+      /* Button styling */
+      .toggle-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75em;
+        color: rgb(var(--rgb-primary-color));
+        cursor: pointer;
+        border-radius: 10px;
+        background-color: rgba(var(--rgb-primary-color), 0.1);
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        transition: all 0.2s ease;
+        max-width: 100%;
+      }
+      
+      .toggle-button:hover {
+        background-color: rgba(var(--rgb-primary-color), 0.15);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+      }
+      
+      .more-info {
+        color: var(--secondary-text-color);
+        margin-right: 4px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      
+      .show-text {
+        font-weight: 500;
+        white-space: nowrap;
+      }
+      
       /* Scrollbar styling */
-      .detail-content::-webkit-scrollbar {
+      .content-area::-webkit-scrollbar {
         width: 6px;
       }
       
-      .detail-content::-webkit-scrollbar-track {
+      .content-area::-webkit-scrollbar-track {
         background: var(--secondary-background-color);
       }
       
-      .detail-content::-webkit-scrollbar-thumb {
+      .content-area::-webkit-scrollbar-thumb {
         background-color: var(--secondary-text-color);
         border-radius: 3px;
       }
@@ -135,129 +176,122 @@ export class DetailView extends LitElement {
     this.dayData = null;
     this.summaryData = null;
     this.showSummary = true;
+    this._showAllGames = false;
+    this._maxGamesToShow = 4; // Show 4 games by default
   }
 
-  /**
-   * Render a game item
-   * @param {string} game - Game name
-   * @param {number} secs - Seconds played
-   * @param {string} color - Color for the game
-   * @param {number} totalSecs - Total seconds (for percentage calculation)
-   * @returns {TemplateResult} Lit-html template result
-   * @private
-   */
+  _toggleShowAllGames() {
+    this._showAllGames = !this._showAllGames;
+  }
+
   _renderGameItem(game, secs, color, totalSecs) {
-    // Calculate the intensity based on percentage of total
     const percentage = totalSecs > 0 ? (secs / totalSecs) : 0;
     const intensity = Math.min(1, Math.sqrt(percentage) * 1.2);
-    
-    // Use adjustColor to ensure the color has good contrast and is theme-aware
     const adjustedColor = adjustColor(color, intensity);
-    
-    // Calculate percentage if totalSecs is provided
     const percentValue = totalSecs > 0 ? Math.round((secs / totalSecs) * 100) : 0;
     
     return html`
       <div class="game-item">
-        <div class="game-color" style="background: ${adjustedColor}; border: 1px solid rgba(0,0,0,0.1);"></div>
-        <div class="game-name">${game}</div>
-        <div class="game-time">${formatDuration(secs)}</div>
-        ${totalSecs > 0 ? html`<div class="summary-percentage">(${percentValue}%)</div>` : ''}
+        <div class="color-indicator" style="background: ${adjustedColor};"></div>
+        <div class="name">${game}</div>
+        <div class="time">${formatDuration(secs)}</div>
       </div>
     `;
   }
 
-  /**
-   * Render the day details view
-   * @returns {TemplateResult} Lit-html template result
-   * @private
-   */
-  _renderDayDetails() {
-    if (!this.dayData) {
-      return html`<div class="no-data-message">No data available</div>`;
+  _renderContent() {
+    // Handle no data cases
+    if ((this.showSummary && !this.summaryData) || (!this.showSummary && !this.dayData)) {
+      return html`
+        <div class="content-area">
+          <div class="no-data">No data available</div>
+        </div>
+      `;
     }
     
-    const { date, statesObj, gameColorMap } = this.dayData;
-    const dateObj = new Date(date);
+    // Get the appropriate data based on view type
+    const { title, totalSeconds, games, gameColorMap } = this._prepareData();
     
-    // Calculate total seconds
-    const totalSeconds = Object.values(statesObj).reduce((a, b) => a + b, 0);
+    // Determine which games to show
+    const gamesToShow = this._showAllGames ? games : games.slice(0, this._maxGamesToShow);
+    const hasMoreGames = games.length > this._maxGamesToShow;
     
-    // Sort games by time (descending)
-    const games = Object.entries(statesObj).sort((a, b) => b[1] - a[1]);
+    // Calculate additional games info
+    const additionalGamesTime = hasMoreGames && !this._showAllGames
+      ? games.slice(this._maxGamesToShow).reduce((total, [_, secs]) => total + secs, 0)
+      : 0;
+    const additionalGamesCount = hasMoreGames ? games.length - this._maxGamesToShow : 0;
     
     return html`
-      <div class="detail-content">
-        <div class="detail-date">
+      <div class="content-area">
+        ${title}
+        <div class="total">Total: ${formatDuration(totalSeconds)}</div>
+        
+        ${games.length > 0 ? html`
+          <div class="games-list">
+            ${gamesToShow.map(([game, secs]) => 
+              this._renderGameItem(game, secs, gameColorMap[game], totalSeconds)
+            )}
+          </div>
+        ` : html`
+          <div class="no-data">No activity data available</div>
+        `}
+      </div>
+      
+      ${hasMoreGames ? html`
+        <div class="button-area">
+          <div class="toggle-button" @click=${this._toggleShowAllGames}>
+            ${this._showAllGames 
+              ? html`<span class="show-text">Show less</span>` 
+              : html`
+                <span class="more-info">${additionalGamesCount} more items</span>
+                <span class="show-text">Show all</span>
+              `
+            }
+          </div>
+        </div>
+      ` : ''}
+    `;
+  }
+
+  _prepareData() {
+    if (this.showSummary) {
+      // Summary view data
+      const { overallTotals, gameColorMap } = this.summaryData;
+      const totalSeconds = Object.values(overallTotals).reduce((a, b) => a + b, 0);
+      const games = Object.entries(overallTotals).sort((a, b) => b[1] - a[1]);
+      const title = html`<div class="header">Overall Summary</div>`;
+      
+      return { title, totalSeconds, games, gameColorMap };
+    } else {
+      // Day details view data
+      const { date, statesObj, gameColorMap } = this.dayData;
+      const dateObj = new Date(date);
+      const totalSeconds = Object.values(statesObj).reduce((a, b) => a + b, 0);
+      const games = Object.entries(statesObj).sort((a, b) => b[1] - a[1]);
+      
+      const title = html`
+        <div class="date">
           ${dateObj.toLocaleDateString(undefined, { 
             weekday: 'long', 
             month: 'short', 
             day: 'numeric' 
           })}
         </div>
-        
-        <div class="detail-total">
-          Total: ${formatDuration(totalSeconds)}
-        </div>
-        
-        ${games.length > 0 ? html`
-          <div class="detail-games">
-            ${games.map(([game, secs]) => 
-              this._renderGameItem(game, secs, gameColorMap[game], totalSeconds)
-            )}
-          </div>
-        ` : html`
-          <div class="no-data-message">No activity data for this day</div>
-        `}
-      </div>
-    `;
+      `;
+      
+      return { title, totalSeconds, games, gameColorMap };
+    }
   }
 
-  /**
-   * Render the summary view
-   * @returns {TemplateResult} Lit-html template result
-   * @private
-   */
-  _renderSummary() {
-    if (!this.summaryData) {
-      return html`<div class="no-data-message">No data available</div>`;
+  updated(changedProperties) {
+    if (changedProperties.has('showSummary') || changedProperties.has('selectedDate')) {
+      this._showAllGames = false;
     }
-    
-    const { overallTotals, gameColorMap } = this.summaryData;
-    
-    // Calculate total seconds
-    const totalSeconds = Object.values(overallTotals).reduce((a, b) => a + b, 0);
-    
-    // Sort games by time (descending)
-    const games = Object.entries(overallTotals).sort((a, b) => b[1] - a[1]);
-    
-    return html`
-      <div class="detail-content">
-        <div class="detail-header">Overall Summary</div>
-        
-        <div class="detail-total">
-          Total: ${formatDuration(totalSeconds)}
-        </div>
-        
-        ${games.length > 0 ? html`
-          <div class="detail-games">
-            ${games.map(([game, secs]) => 
-              this._renderGameItem(game, secs, gameColorMap[game], totalSeconds)
-            )}
-          </div>
-        ` : html`
-          <div class="no-data-message">No activity data available</div>
-        `}
-      </div>
-    `;
   }
 
   render() {
-    return html`
-      <div class="detail-view">
-        ${this.showSummary ? this._renderSummary() : this._renderDayDetails()}
-      </div>
-    `;
+    return this._renderContent();
   }
 }
 

@@ -51,6 +51,7 @@ class CalendarHeatmapCard extends LitElement {
         
         /* RGB versions of colors for opacity support */
         --disabled-text-color-rgb: 117, 117, 117;
+        --rgb-primary-color: var(--rgb-primary-color, 33, 150, 243);
         
         /* Heatmap specific colors */
         --heatmap-no-data-color: var(--calendar-heatmap-no-data-color, var(--disabled-text-color));
@@ -63,6 +64,9 @@ class CalendarHeatmapCard extends LitElement {
         --heatmap-divider-color: var(--divider-color);
         --heatmap-box-shadow: var(--ha-card-box-shadow, 0 2px 5px rgba(0,0,0,0.26));
         --heatmap-border-radius: var(--ha-card-border-radius, 4px);
+        
+        /* Height variable for card */
+        --heatmap-card-height: 235px;
       }
       
       ha-card {
@@ -71,47 +75,49 @@ class CalendarHeatmapCard extends LitElement {
         border-radius: var(--heatmap-border-radius);
         color: var(--heatmap-primary-text);
         background: var(--heatmap-card-background);
+        /* Fixed height for the card */
+        height: var(--heatmap-card-height);
       }
       
       .card-content {
         display: flex;
         flex-wrap: wrap;
         padding: 0;
-        height: auto;
-        min-height: 220px;
+        height: 100%;
+        box-sizing: border-box;
         font-family: var(--primary-font-family, var(--paper-font-common-base));
       }
       
       .heatmap-container {
         flex: 3;
         min-width: 0;
-        padding: 16px 16px 24px 16px;
+        padding: 16px;
         background-color: var(--heatmap-card-background);
-        min-height: 220px;
         overflow: hidden;
         position: relative;
         display: flex;
         flex-direction: column;
         height: 100%;
+        box-sizing: border-box;
       }
       
       .detail-view-container {
         flex: 1;
         min-width: 200px;
         max-width: 280px;
-        padding: 16px 16px 16px 12px;
+        padding: 16px 16px 8px 12px;
         background-color: var(--heatmap-secondary-background);
         border-left: 1px solid var(--heatmap-divider-color);
         display: flex;
         flex-direction: column;
         overflow: hidden;
         opacity: 0.9;
-        min-height: 220px;
         height: 100%;
+        box-sizing: border-box;
       }
       
       .card-header {
-        padding: 8px 0 16px;
+        padding: 8px 0 8px;
         font-size: var(--ha-card-header-font-size, 1.4em);
         font-weight: var(--ha-card-header-font-weight, 500);
         color: var(--ha-card-header-color, var(--primary-text-color));
