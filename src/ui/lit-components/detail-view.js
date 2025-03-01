@@ -257,18 +257,18 @@ export class DetailView extends LitElement {
   _prepareData() {
     if (this.showSummary) {
       // Summary view data
-      const { overallTotals, gameColorMap } = this.summaryData;
-      const totalSeconds = Object.values(overallTotals).reduce((a, b) => a + b, 0);
-      const games = Object.entries(overallTotals).sort((a, b) => b[1] - a[1]);
+      const { overallTotals = {}, gameColorMap = {} } = this.summaryData || {};
+      const totalSeconds = overallTotals ? Object.values(overallTotals).reduce((a, b) => a + b, 0) : 0;
+      const games = overallTotals ? Object.entries(overallTotals).sort((a, b) => b[1] - a[1]) : [];
       const title = html`<div class="header">Overall Summary</div>`;
       
       return { title, totalSeconds, games, gameColorMap };
     } else {
       // Day details view data
-      const { date, statesObj, gameColorMap } = this.dayData;
-      const dateObj = new Date(date);
-      const totalSeconds = Object.values(statesObj).reduce((a, b) => a + b, 0);
-      const games = Object.entries(statesObj).sort((a, b) => b[1] - a[1]);
+      const { date, statesObj = {}, gameColorMap = {} } = this.dayData || {};
+      const dateObj = date ? new Date(date) : new Date();
+      const totalSeconds = statesObj ? Object.values(statesObj).reduce((a, b) => a + b, 0) : 0;
+      const games = statesObj ? Object.entries(statesObj).sort((a, b) => b[1] - a[1]) : [];
       
       const title = html`
         <div class="date">

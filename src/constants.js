@@ -9,7 +9,7 @@
  * Current version of the card
  * @type {string}
  */
-export const CARD_VERSION = '3.2.0';
+export const CARD_VERSION = '3.3.0';
 
 /**
  * Material Design inspired color palette for heatmap
@@ -36,7 +36,6 @@ export const MATERIAL_COLORS = [
  */
 export const DEFAULT_CONFIG = {
   title: 'Game Activity',
-  days_to_show: 365,
   ignored_states: ['unknown', 'idle', 'offline', ''],
   refresh_interval: 10 * 60, // 10 minutes in seconds
   start_day_of_week: 'monday', // can be "monday" or "sunday"

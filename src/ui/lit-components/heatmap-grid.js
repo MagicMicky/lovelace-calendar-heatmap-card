@@ -302,7 +302,7 @@ export class HeatmapGrid extends LitElement {
         ${this.weeks.map((week, weekIndex) => html`
           <div class="week-column week-column-spacing">
             ${Array(7).fill(0).map((_, dayIndex) => {
-              if (dayIndex < week.length) {
+              if (dayIndex < week.length && week[dayIndex] !== null) {
                 return this._renderDayCell(week[dayIndex], weekIndex, dayIndex);
               } else {
                 return this._renderEmptyCell();

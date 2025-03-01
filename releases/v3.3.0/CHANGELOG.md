@@ -2,18 +2,6 @@
 
 All notable changes to the Calendar Heatmap Card will be documented in this file.
 
-## [3.3.0] - 2025-03-01
-
-### Added
-- Automatic sizing of heatmap for better responsiveness
-- Limit on number of games displayed for improved performance
-
-### Changed
-- Migrated fully to Lit framework for improved performance and maintainability
-- Improved history fetching to follow Home Assistant best practices
-- Limited card height for better UI integration
-- Enhanced UI with better padding and scroll behavior
-
 ## [3.2.0] - 2023-03-01
 
 ### Added

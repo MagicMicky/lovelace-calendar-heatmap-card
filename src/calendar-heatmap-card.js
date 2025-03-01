@@ -9,7 +9,13 @@ import {
   calculateOverallTotals,
   findMostPlayedGame
 } from './data/data-processor.js';
-import { getHeatmapStartDate, buildWeeksArray, groupWeeksByMonth } from './utils/date-utils.js';
+import { 
+  getHeatmapStartDate, 
+  buildWeeksArray, 
+  groupWeeksByMonth,
+  calculateMaxWeeks
+} from './utils/date-utils.js';
+import { CELL_DIMENSIONS } from './ui/cell-dimensions.js';
 
 // Import LitElement components
 import './ui/lit-components/heatmap-grid.js';
@@ -34,6 +40,7 @@ class CalendarHeatmapCard extends LitElement {
       _bestGame: { type: String },
       _bestSec: { type: Number },
       _isLoading: { type: Boolean },
+      _containerWidth: { type: Number },
     };
   }
 
@@ -83,11 +90,12 @@ class CalendarHeatmapCard extends LitElement {
       
       .card-content {
         display: flex;
-        flex-wrap: wrap;
+        flex-wrap: nowrap; /* Prevent wrapping to ensure proper layout */
         padding: 0;
         height: 100%;
         box-sizing: border-box;
         font-family: var(--primary-font-family, var(--paper-font-common-base));
+        overflow: hidden; /* Prevent overflow */
       }
       
       .loading-container {
@@ -110,7 +118,7 @@ class CalendarHeatmapCard extends LitElement {
       
       .heatmap-container {
         flex: 3;
-        min-width: 0;
+        min-width: 0; /* Allow container to shrink below content size */
         padding: 16px;
         background-color: var(--heatmap-card-background);
         overflow: hidden;
@@ -134,6 +142,7 @@ class CalendarHeatmapCard extends LitElement {
         opacity: 0.9;
         height: 100%;
         box-sizing: border-box;
+        z-index: 1; /* Ensure detail panel is above the heatmap */
       }
       
       .card-header {
@@ -171,6 +180,9 @@ class CalendarHeatmapCard extends LitElement {
         padding-bottom: 0;
         box-sizing: border-box;
         flex: 1;
+        /* Prevent content from overflowing */
+        max-width: 100%;
+        width: 100%;
       }
       
       /* Scrollbar styling */
@@ -191,12 +203,27 @@ class CalendarHeatmapCard extends LitElement {
       @media (max-width: 600px) {
         .card-content {
           flex-direction: column;
+          flex-wrap: nowrap;
+          height: auto;
+          min-height: var(--heatmap-card-height);
+        }
+        
+        ha-card {
+          height: auto;
+          min-height: var(--heatmap-card-height);
+        }
+        
+        .heatmap-container {
+          height: 180px;
+          min-height: 180px;
         }
         
         .detail-view-container {
           max-width: none;
           border-left: none;
           border-top: 1px solid var(--heatmap-divider-color);
+          height: auto;
+          min-height: 100px;
         }
       }
     `;
@@ -216,7 +243,12 @@ class CalendarHeatmapCard extends LitElement {
     this._lastEntityState = null;
     this._lastHistoryTimestamp = 0;
     this._themeObserver = null; // MutationObserver for theme changes
-    this._isLoading = false;
+    this._isLoading = true;
+    this._containerWidth = 0; // Initialize container width
+    this._config = {}; // Initialize config
+    
+    // Bind the resize handler to this instance
+    this._handleResize = this._handleResize.bind(this);
   }
 
   setConfig(config) {
@@ -298,27 +330,45 @@ class CalendarHeatmapCard extends LitElement {
     
     // Set up theme observer
     this._setupThemeObserver();
+    
+    // Set up entity subscription
+    this._setupSubscription();
+    
+    // Add resize event listener
+    window.addEventListener('resize', this._handleResize);
   }
 
   disconnectedCallback() {
     super.disconnectedCallback();
     
-    // Clean up timers
+    // Clear refresh timer
     this._clearRefreshTimer();
     
-    // Clean up entity subscription if exists
-    if (this._unsubscribe) {
-      this._unsubscribe();
-      this._unsubscribe = null;
-    }
-    
-    // Clear any cached data to prevent memory leaks
-    this._dailyTotals = null;
-    this._gameColorMap = null;
-    this._overallTotals = null;
-    
-    // Clean up theme observer
+    // Remove theme observer
     this._removeThemeObserver();
+    
+    // Unsubscribe from entity
+    this._unsubscribeFromEntity();
+    
+    // Remove resize event listener
+    window.removeEventListener('resize', this._handleResize);
+  }
+  
+  /**
+   * Called after the component's first render
+   * @param {Map} changedProperties - Changed properties
+   */
+  firstUpdated(changedProperties) {
+    super.firstUpdated(changedProperties);
+    
+    // Initialize container width
+    setTimeout(() => {
+      const heatmapContainer = this.shadowRoot.querySelector('.heatmap-container');
+      if (heatmapContainer) {
+        this._containerWidth = heatmapContainer.clientWidth;
+        this.requestUpdate();
+      }
+    }, 0);
   }
   
   /**
@@ -443,11 +493,21 @@ class CalendarHeatmapCard extends LitElement {
     }
   }
 
+  /**
+   * Unsubscribe from entity updates
+   * @private
+   */
   _unsubscribeFromEntity() {
+    // Clean up entity subscription if exists
     if (this._unsubscribe) {
       this._unsubscribe();
       this._unsubscribe = null;
     }
+    
+    // Clear any cached data to prevent memory leaks
+    this._dailyTotals = null;
+    this._gameColorMap = null;
+    this._overallTotals = null;
   }
 
   async _fetchHistoryData() {
@@ -461,8 +521,11 @@ class CalendarHeatmapCard extends LitElement {
       this._isLoading = true;
       this.requestUpdate();
       
+      // Calculate max weeks based on container width
+      const maxWeeks = this._calculateMaxWeeks();
+      
       // Get history data for the entity
-      const startDate = getHeatmapStartDate(this._config.days_to_show, this._config.start_day_of_week);
+      const startDate = getHeatmapStartDate(maxWeeks, this._config.start_day_of_week);
       const endDate = new Date(); // Current time
       
       // Fetch history with proper date validation
@@ -507,20 +570,20 @@ class CalendarHeatmapCard extends LitElement {
 
   _createSummaryData() {
     return {
-      overallTotals: this._overallTotals,
-      bestGame: this._bestGame,
-      bestSec: this._bestSec,
-      gameColorMap: this._gameColorMap,
-      maxValue: this._maxValue
+      overallTotals: this._overallTotals || {},
+      bestGame: this._bestGame || "",
+      bestSec: this._bestSec || 0,
+      gameColorMap: this._gameColorMap || {},
+      maxValue: this._maxValue || 0
     };
   }
 
   _createDayData(date) {
     return {
       date,
-      statesObj: this._dailyTotals[date] || {},
-      gameColorMap: this._gameColorMap,
-      maxValue: this._maxValue
+      statesObj: this._dailyTotals && date ? (this._dailyTotals[date] || {}) : {},
+      gameColorMap: this._gameColorMap || {},
+      maxValue: this._maxValue || 0
     };
   }
 
@@ -558,19 +621,82 @@ class CalendarHeatmapCard extends LitElement {
     // For now, we'll just use the hover styles in CSS
   }
 
+  /**
+   * Handle window resize event
+   * @private
+   */
+  _handleResize() {
+    // Use requestAnimationFrame to avoid excessive updates
+    requestAnimationFrame(() => {
+      // Get the container width
+      const heatmapContainer = this.shadowRoot.querySelector('.heatmap-container');
+      if (heatmapContainer) {
+        const newWidth = heatmapContainer.clientWidth;
+        // Only update if width has changed
+        if (newWidth !== this._containerWidth) {
+          this._containerWidth = newWidth;
+          // Force re-render
+          this.requestUpdate();
+        }
+      }
+    });
+  }
+
+  /**
+   * Calculate the maximum number of weeks that can be displayed
+   * @returns {number} Maximum number of weeks
+   * @private
+   */
+  _calculateMaxWeeks() {
+    // Get the container width
+    if (!this._containerWidth || this._containerWidth <= 0) {
+      // If we don't have a valid width yet, use a default
+      return 26; // Default to half a year as a safer default
+    }
+    
+    // Get the detail panel width to account for it
+    const detailPanel = this.shadowRoot?.querySelector('.detail-view-container');
+    const detailPanelWidth = detailPanel?.offsetWidth || 0;
+    
+    // Calculate the actual available width for the heatmap
+    // Subtract some padding to ensure we don't overflow
+    const availableWidth = this._containerWidth - 30; // 30px for padding and day labels
+    
+    // Calculate max weeks based on available width
+    const maxWeeks = calculateMaxWeeks(availableWidth, CELL_DIMENSIONS.weekColWidth);
+    
+    // Ensure we show at least 4 weeks and at most 52 weeks (1 year)
+    return Math.max(4, Math.min(52, maxWeeks));
+  }
+
   render() {
     if (!this._config || !this._hass) {
       return html``;
     }
     
+    // Update container width if not set yet
+    if (!this._containerWidth) {
+      // Use setTimeout to ensure the DOM is ready
+      setTimeout(() => {
+        const heatmapContainer = this.shadowRoot.querySelector('.heatmap-container');
+        if (heatmapContainer) {
+          this._containerWidth = heatmapContainer.clientWidth;
+          this.requestUpdate();
+        }
+      }, 0);
+    }
+    
+    // Calculate max weeks based on container width
+    const maxWeeks = this._calculateMaxWeeks();
+    
     // Build calendar data
-    const startDate = getHeatmapStartDate(this._config.days_to_show, this._config.start_day_of_week);
+    const startDate = getHeatmapStartDate(maxWeeks, this._config.start_day_of_week);
     const weeks = buildWeeksArray(startDate);
     const monthGroups = groupWeeksByMonth(weeks);
 
     // Calculate visible weeks based on available space
-    const maxWeeks = Math.min(weeks.length, 52); // Limit to 52 weeks (1 year) maximum
-    const visibleWeeks = weeks.slice(0, maxWeeks);
+    // Ensure the current week is always visible by taking the most recent weeks
+    const visibleWeeks = weeks.slice(-maxWeeks);
 
     // Create day data or summary data based on selection
     const dayData = this._selectedDate ? this._createDayData(this._selectedDate) : null;
@@ -597,15 +723,15 @@ class CalendarHeatmapCard extends LitElement {
             <!-- Grid Container -->
             <div class="grid-container">
               <!-- Day Labels -->
-              <day-labels .startDayOfWeek=${this._config.start_day_of_week}></day-labels>
+              <day-labels .startDayOfWeek=${this._config.start_day_of_week || 'monday'}></day-labels>
               
               <!-- Heatmap Grid Wrapper -->
               <div class="heatmap-grid-wrapper">
                 <heatmap-grid
                   .weeks=${visibleWeeks}
-                  .dailyTotals=${this._dailyTotals}
-                  .maxValue=${this._maxValue}
-                  .gameColorMap=${this._gameColorMap}
+                  .dailyTotals=${this._dailyTotals || {}}
+                  .maxValue=${this._maxValue || 0}
+                  .gameColorMap=${this._gameColorMap || {}}
                   .selectedDate=${this._selectedDate}
                   @cell-click=${this._onCellClick}
                   @cell-hover=${this._onCellHover}
