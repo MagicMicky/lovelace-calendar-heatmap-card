@@ -1,6 +1,6 @@
 {
   "name": "calendar-heatmap-card",
-  "version": "3.3.0",
+  "version": "3.4.0",
   "description": "A Lovelace custom card for Home Assistant showing a calendar heatmap of game activity.",
   "main": "dist/calendar-heatmap-card.js",
   "module": "dist/calendar-heatmap-card.js",

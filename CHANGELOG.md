@@ -1,3 +1,18 @@
+# [3.4.0](https://github.com/MagicMicky/lovelace-calendar-heatmap-card/compare/v3.3.0...v3.4.0) (2025-03-01)
+
+
+### Bug Fixes
+
+* believe AI overlords ([6b74db3](https://github.com/MagicMicky/lovelace-calendar-heatmap-card/commit/6b74db3af7f21b04900037dcc4b95135bea316b7))
+* fix prettier vs eslint ([924d6a0](https://github.com/MagicMicky/lovelace-calendar-heatmap-card/commit/924d6a0837048fbdf931ee4b770453cea96c4e13))
+* lint ([899a587](https://github.com/MagicMicky/lovelace-calendar-heatmap-card/commit/899a5872a9317d4fa776117a2033fbb2c21ebd10))
+
+
+### Features
+
+* automatic build ([5777296](https://github.com/MagicMicky/lovelace-calendar-heatmap-card/commit/5777296c50fec4e2f0db30d323dbc56e1f8558a6))
+* fix linting issues and setup pre-commit hooks ([7326378](https://github.com/MagicMicky/lovelace-calendar-heatmap-card/commit/73263787cd06ad859ccc99ee55f2414fb5b83b98))
+
 # Changelog
 
 All notable changes to the Calendar Heatmap Card will be documented in this file.
@@ -42,4 +57,4 @@ All notable changes to the Calendar Heatmap Card will be documented in this file
 ### Added
 - Initial release
 - Basic calendar heatmap functionality
-- Support for tracking game activity 
+- Support for tracking game activity
