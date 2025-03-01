@@ -2,7 +2,9 @@
  * Entity Subscription Service
  * 
  * This module provides functions to subscribe to entity state changes
- * using Home Assistant's WebSocket API.
+ * using Home Assistant's WebSocket API through the Home Assistant frontend API.
+ * Note: This does not directly use home-assistant-js-websocket, but rather
+ * accesses the WebSocket connection already established by the Home Assistant frontend.
  */
 
 /**

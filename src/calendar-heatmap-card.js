@@ -10,12 +10,12 @@ import {
   findMostPlayedGame
 } from './data/data-processor.js';
 import { getHeatmapStartDate, buildWeeksArray, groupWeeksByMonth } from './utils/date-utils.js';
-import { getThemeColors, createElement } from './utils/dom-utils.js';
-import { createMonthHeader } from './ui/components/month-header.js';
-import { createDayLabels } from './ui/components/day-labels.js';
-import { createHeatmapGrid } from './ui/components/heatmap-grid.js';
-import { updateDetailViewWithSummary, updateDetailViewWithDayDetails } from './ui/components/detail-view.js';
-import { getStyles } from './ui/styles.js';
+
+// Import LitElement components
+import './ui/lit-components/heatmap-grid.js';
+import './ui/lit-components/day-labels.js';
+import './ui/lit-components/month-header.js';
+import './ui/lit-components/detail-view.js';
 
 /**
  * Calendar Heatmap Card
@@ -40,8 +40,139 @@ class CalendarHeatmapCard extends LitElement {
     return css`
       :host {
         display: block;
+        
+        /* Text colors */
+        --heatmap-primary-text: var(--primary-text-color);
+        --heatmap-secondary-text: var(--secondary-text-color);
+        
+        /* Background colors */
+        --heatmap-card-background: var(--ha-card-background, var(--card-background-color));
+        --heatmap-secondary-background: var(--secondary-background-color);
+        
+        /* RGB versions of colors for opacity support */
+        --disabled-text-color-rgb: 117, 117, 117;
+        
+        /* Heatmap specific colors */
+        --heatmap-no-data-color: var(--calendar-heatmap-no-data-color, var(--disabled-text-color));
+        --heatmap-level-1: var(--calendar-heatmap-level-1, var(--success-color));
+        --heatmap-level-2: var(--calendar-heatmap-level-2, var(--primary-color));
+        --heatmap-level-3: var(--calendar-heatmap-level-3, var(--accent-color));
+        --heatmap-level-4: var(--calendar-heatmap-level-4, var(--state-active-color));
+        
+        /* UI elements */
+        --heatmap-divider-color: var(--divider-color);
+        --heatmap-box-shadow: var(--ha-card-box-shadow, 0 2px 5px rgba(0,0,0,0.26));
+        --heatmap-border-radius: var(--ha-card-border-radius, 4px);
       }
-      /* Styles will be loaded dynamically based on theme */
+      
+      ha-card {
+        overflow: hidden;
+        box-shadow: var(--heatmap-box-shadow);
+        border-radius: var(--heatmap-border-radius);
+        color: var(--heatmap-primary-text);
+        background: var(--heatmap-card-background);
+      }
+      
+      .card-content {
+        display: flex;
+        flex-wrap: wrap;
+        padding: 0;
+        height: auto;
+        min-height: 220px;
+        font-family: var(--primary-font-family, var(--paper-font-common-base));
+      }
+      
+      .heatmap-container {
+        flex: 3;
+        min-width: 0;
+        padding: 16px 16px 24px 16px;
+        background-color: var(--heatmap-card-background);
+        min-height: 220px;
+        overflow: hidden;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+      }
+      
+      .detail-view-container {
+        flex: 1;
+        min-width: 200px;
+        max-width: 280px;
+        padding: 16px 16px 16px 12px;
+        background-color: var(--heatmap-secondary-background);
+        border-left: 1px solid var(--heatmap-divider-color);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        opacity: 0.9;
+        min-height: 220px;
+        height: 100%;
+      }
+      
+      .card-header {
+        padding: 8px 0 16px;
+        font-size: var(--ha-card-header-font-size, 1.4em);
+        font-weight: var(--ha-card-header-font-weight, 500);
+        color: var(--ha-card-header-color, var(--primary-text-color));
+        position: sticky;
+        left: 0;
+        background-color: var(--heatmap-card-background);
+        z-index: 1;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        margin-bottom: 4px;
+      }
+      
+      .grid-container {
+        display: flex;
+        min-width: min-content;
+        overflow: visible;
+        margin-top: 0;
+        flex: 1;
+        align-items: flex-start;
+        position: relative;
+        box-sizing: border-box;
+        margin-left: 0;
+        margin-right: 0;
+      }
+      
+      .heatmap-grid-wrapper {
+        overflow-x: auto;
+        overflow-y: hidden;
+        margin-bottom: 0;
+        padding-bottom: 0;
+        box-sizing: border-box;
+        flex: 1;
+      }
+      
+      /* Scrollbar styling */
+      .heatmap-grid-wrapper::-webkit-scrollbar {
+        height: 6px;
+      }
+      
+      .heatmap-grid-wrapper::-webkit-scrollbar-track {
+        background: var(--heatmap-card-background);
+      }
+      
+      .heatmap-grid-wrapper::-webkit-scrollbar-thumb {
+        background-color: var(--heatmap-secondary-text);
+        border-radius: 3px;
+      }
+      
+      /* Responsive adjustments */
+      @media (max-width: 600px) {
+        .card-content {
+          flex-direction: column;
+        }
+        
+        .detail-view-container {
+          max-width: none;
+          border-left: none;
+          border-top: 1px solid var(--heatmap-divider-color);
+        }
+      }
     `;
   }
 
@@ -269,33 +400,13 @@ class CalendarHeatmapCard extends LitElement {
     };
   }
 
-  _updateDetailView(dateToShow) {
-    const detailView = this.shadowRoot.querySelector('.detail-view');
-    if (!detailView) return;
-    
-    // Clear existing content
-    detailView.innerHTML = '';
-    
-    if (dateToShow) {
-      // Show details for the selected date
-      const dayData = this._createDayData(dateToShow);
-      updateDetailViewWithDayDetails(detailView, dayData);
-    } else {
-      // Show summary data
-      const summaryData = this._createSummaryData();
-      updateDetailViewWithSummary(detailView, summaryData);
-    }
-    
-    // Update selected cell styling
-    this._updateSelectedCellClasses();
-  }
-
-  _onCellHover(data) {
-    // We could implement hover effects here if needed
-    // For now, we'll just use the hover styles in CSS
-  }
-
-  _onCellClick(data) {
+  /**
+   * Handle cell click event
+   * @param {CustomEvent} event - Cell click event
+   * @private
+   */
+  _onCellClick(event) {
+    const data = event.detail;
     if (!data) return;
     
     const { date } = data;
@@ -309,130 +420,80 @@ class CalendarHeatmapCard extends LitElement {
       this._selectedDate = date;
     }
     
-    // Update the detail view
-    this._updateDetailView(this._selectedDate);
+    // Request an update to re-render with new selection
+    this.requestUpdate();
   }
 
-  _updateSelectedCellClasses() {
-    // Remove selected class from all cells
-    const cells = this.shadowRoot.querySelectorAll('.day-cell');
-    cells.forEach(cell => {
-      if (cell._data && cell._data.date === this._selectedDate) {
-        cell.classList.add('selected');
-      } else {
-        cell.classList.remove('selected');
-      }
-    });
+  /**
+   * Handle cell hover event
+   * @param {CustomEvent} event - Cell hover event
+   * @private
+   */
+  _onCellHover(event) {
+    // We could implement hover effects here if needed
+    // For now, we'll just use the hover styles in CSS
   }
 
   render() {
     if (!this._config || !this._hass) {
       return html``;
     }
-
-    // Add dynamic styles
-    const styleText = getStyles();
-    const styleElement = document.createElement('style');
-    styleElement.textContent = styleText;
-
+    
     // Build calendar data
     const startDate = getHeatmapStartDate(this._config.days_to_show, this._config.start_day_of_week);
     const weeks = buildWeeksArray(startDate);
     const monthGroups = groupWeeksByMonth(weeks);
 
-    // Create main card container
-    const card = createElement('ha-card', {}, {});
-
-    // Main content container
-    const container = createElement('div', {}, {
-      className: 'card-content flex-container flex-align-stretch'
-    });
-
-    // Left Panel: Heatmap Container
-    const heatmapContainer = createElement('div', {}, {
-      className: 'heatmap-container'
-    });
-
-    // Add title to the left panel
-    const cardHeader = createElement('div', {}, {
-      className: 'card-header',
-      textContent: this._config.title || "Calendar Heatmap"
-    });
-    heatmapContainer.appendChild(cardHeader);
-
-    // Right Panel: Detail View
-    const detailView = createElement('div', {}, {
-      className: 'detail-view'
-    });
-
-    // Create UI components
-    const monthHeader = createMonthHeader(monthGroups, getComputedStyle(this));
-    heatmapContainer.appendChild(monthHeader);
-
-    // Build Main Grid: Day Labels + Heatmap
-    const gridContainer = createElement('div', {}, {
-      className: 'grid-container flex-container flex-align-start grid-container-spacing'
-    });
-    
-    // Day labels column
-    const dayLabels = createDayLabels(getComputedStyle(this), this._config.start_day_of_week);
-    gridContainer.appendChild(dayLabels);
-
     // Calculate visible weeks based on available space
-    // We'll limit the number of weeks to show to prevent scrolling
     const maxWeeks = Math.min(weeks.length, 52); // Limit to 52 weeks (1 year) maximum
     const visibleWeeks = weeks.slice(0, maxWeeks);
 
-    // Create a wrapper for the heatmap grid to handle overflow better
-    const heatmapGridWrapper = createElement('div', {}, {
-      className: 'heatmap-grid-wrapper position-relative'
-    });
+    // Create day data or summary data based on selection
+    const dayData = this._selectedDate ? this._createDayData(this._selectedDate) : null;
+    const summaryData = this._createSummaryData();
 
-    // Heatmap grid
-    const heatmapGrid = createHeatmapGrid(
-      visibleWeeks, 
-      this._dailyTotals, 
-      this._maxValue, 
-      this._gameColorMap, 
-      (data) => this._onCellHover(data),
-      (data) => this._onCellClick(data),
-      this._selectedDate
-    );
-    
-    heatmapGridWrapper.appendChild(heatmapGrid);
-    gridContainer.appendChild(heatmapGridWrapper);
-    heatmapContainer.appendChild(gridContainer);
-
-    // Initialize detail view based on selection state
-    if (this._selectedDate) {
-      this._updateDetailView(this._selectedDate);
-    } else {
-      this._updateDetailView(null);
-    }
-
-    // Add panels to container
-    container.appendChild(heatmapContainer);
-    container.appendChild(detailView);
-
-    card.appendChild(container);
-    
-    // Clear existing content and append new elements
-    const shadowRoot = this.shadowRoot;
-    shadowRoot.innerHTML = '';
-    shadowRoot.appendChild(styleElement);
-    shadowRoot.appendChild(card);
-    
-    // Ensure the detail view is populated immediately after rendering
-    // This fixes the issue where the detail view is empty on initial load
-    setTimeout(() => {
-      if (this._selectedDate) {
-        this._updateDetailView(this._selectedDate);
-      } else {
-        this._updateDetailView(null);
-      }
-    }, 0);
-    
-    return html``;
+    return html`
+      <ha-card>
+        <div class="card-content">
+          <!-- Left Panel: Heatmap Container -->
+          <div class="heatmap-container">
+            <div class="card-header">${this._config.title || "Calendar Heatmap"}</div>
+            
+            <!-- Month Header -->
+            <month-header .monthGroups=${monthGroups}></month-header>
+            
+            <!-- Grid Container -->
+            <div class="grid-container">
+              <!-- Day Labels -->
+              <day-labels .startDayOfWeek=${this._config.start_day_of_week}></day-labels>
+              
+              <!-- Heatmap Grid Wrapper -->
+              <div class="heatmap-grid-wrapper">
+                <heatmap-grid
+                  .weeks=${visibleWeeks}
+                  .dailyTotals=${this._dailyTotals}
+                  .maxValue=${this._maxValue}
+                  .gameColorMap=${this._gameColorMap}
+                  .selectedDate=${this._selectedDate}
+                  @cell-click=${this._onCellClick}
+                  @cell-hover=${this._onCellHover}
+                ></heatmap-grid>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Right Panel: Detail View -->
+          <div class="detail-view-container">
+            <detail-view
+              .selectedDate=${this._selectedDate}
+              .dayData=${dayData}
+              .summaryData=${summaryData}
+              .showSummary=${!this._selectedDate}
+            ></detail-view>
+          </div>
+        </div>
+      </ha-card>
+    `;
   }
 }
 

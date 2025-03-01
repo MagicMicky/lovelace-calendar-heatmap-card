@@ -1,7 +1,9 @@
 /**
  * History Service
  * 
- * This module provides functions to interact with the Home Assistant history API.
+ * This module provides functions to interact with the Home Assistant history API
+ * through the Home Assistant frontend API (hass object).
+ * It uses both WebSocket API and REST API depending on availability.
  */
 
 /**
