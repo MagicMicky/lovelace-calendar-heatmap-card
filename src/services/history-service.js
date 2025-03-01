@@ -5,30 +5,68 @@
  */
 
 /**
+ * Safely converts a date to ISO string with validation
+ * @param {Date} date - Date to convert
+ * @returns {string} ISO string or fallback to current time if invalid
+ */
+function safeISOString(date) {
+  try {
+    // Check if date is valid
+    if (!(date instanceof Date) || isNaN(date.getTime())) {
+      console.warn('Calendar Heatmap: Invalid date detected, using current time as fallback');
+      return new Date().toISOString();
+    }
+    return date.toISOString();
+  } catch (error) {
+    console.warn('Calendar Heatmap: Error converting date to ISO string, using current time as fallback');
+    return new Date().toISOString();
+  }
+}
+
+/**
  * Fetches historical state data for an entity from Home Assistant
  * 
  * @param {Object} hass - Home Assistant instance
  * @param {string} entityId - Entity ID to fetch history for
- * @param {number} daysToShow - Number of days of history to fetch
+ * @param {Date|number} startDate - Start date or days to show
+ * @param {Date} endDate - End date (optional, defaults to now)
  * @returns {Promise<Array>} Promise resolving to history data array
  */
-export async function fetchHistory(hass, entityId, daysToShow) {
+export async function fetchHistory(hass, entityId, startDate, endDate = new Date()) {
   // Validate inputs
   if (!hass) {
+    console.warn('Calendar Heatmap: No hass instance provided');
     return [];
   }
   
   if (!entityId || typeof entityId !== 'string') {
+    console.warn('Calendar Heatmap: Invalid entity ID');
     return [];
   }
   
-  if (!daysToShow || daysToShow <= 0) {
-    daysToShow = 30;
+  // Handle different types of startDate
+  let start;
+  if (startDate instanceof Date) {
+    start = startDate;
+  } else if (typeof startDate === 'number' && startDate > 0) {
+    // If startDate is a number, treat it as days to show
+    start = new Date();
+    start.setDate(start.getDate() - startDate);
+  } else {
+    console.warn('Calendar Heatmap: Invalid start date, using 30 days as default');
+    start = new Date();
+    start.setDate(start.getDate() - 30);
   }
   
-  // Calculate date range
-  const now = new Date();
-  const start = new Date(now.getTime() - daysToShow * 24 * 60 * 60 * 1000);
+  // Ensure end date is valid
+  if (!(endDate instanceof Date) || isNaN(endDate.getTime())) {
+    console.warn('Calendar Heatmap: Invalid end date, using current time');
+    endDate = new Date();
+  }
+  
+  // Convert dates to ISO strings safely
+  const startISOString = safeISOString(start);
+  const endISOString = safeISOString(endDate);
   
   // Try WebSocket API first if available
   if (hass.callWS) {
@@ -37,8 +75,8 @@ export async function fetchHistory(hass, entityId, daysToShow) {
       const history = await hass.callWS({
         type: 'history/history_during_period',
         entity_ids: [entityId],
-        start_time: start.toISOString(),
-        end_time: now.toISOString(),
+        start_time: startISOString,
+        end_time: endISOString,
         minimal_response: false,
         no_attributes: true,
         significant_changes_only: false,
@@ -57,9 +95,6 @@ export async function fetchHistory(hass, entityId, daysToShow) {
   // Fallback to REST API
   if (hass.callApi) {
     try {
-      const startISOString = start.toISOString();
-      const endISOString = now.toISOString();
-      
       // Build the API URL with proper encoding
       const encodedEntityId = encodeURIComponent(entityId);
       const encodedEndTime = encodeURIComponent(endISOString);

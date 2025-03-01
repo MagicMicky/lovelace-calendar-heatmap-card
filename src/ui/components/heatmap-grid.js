@@ -2,15 +2,17 @@ import { createElement } from '../../utils/dom-utils.js';
 import { CELL_DIMENSIONS } from '../styles.js';
 import { formatDuration } from '../../utils/format-utils.js';
 import { findDominantGame } from '../../data/data-processor.js';
-import { adjustColor } from '../../utils/color-utils.js';
+import { adjustColor, getNoDataColorWithOpacity } from '../../utils/color-utils.js';
+import { CSS_VARIABLES } from '../../constants.js';
 
 /**
  * Create the heatmap grid component
+ * Uses Home Assistant CSS variables for theming
+ * 
  * @param {Array} weeks - Array of weeks
  * @param {Object} dailyTotals - Daily totals by state
  * @param {number} maxValue - Maximum daily total seconds
  * @param {Object} gameColorMap - Map of game names to colors
- * @param {string} theme - Theme ('dark' or 'light')
  * @param {Function} onCellHover - Callback for cell hover
  * @param {Function} onCellClick - Callback for cell click
  * @param {string|null} selectedDate - Currently selected date (YYYY-MM-DD)
@@ -21,7 +23,6 @@ export function createHeatmapGrid(
   dailyTotals, 
   maxValue, 
   gameColorMap, 
-  theme, 
   onCellHover,
   onCellClick,
   selectedDate
@@ -51,11 +52,82 @@ export function createHeatmapGrid(
         // Find dominant game for this day
         const { dominantGame, dominantSec } = findDominantGame(statesObj);
         
-        // Determine cell color
-        const defaultNoDataColor = theme === "dark" ? "#757575" : "#E0E0E0";
-        const baseColor = dominantGame ? gameColorMap[dominantGame] : defaultNoDataColor;
-        const intensity = maxValue > 0 ? dominantSec / maxValue : 0;
-        const cellColor = adjustColor(baseColor, intensity, theme);
+        // Calculate intensity with a more balanced approach
+        let intensity = 0;
+        if (maxValue > 0 && dominantSec > 0) {
+          // Define time thresholds in seconds for better visual differentiation
+          // These thresholds represent common gaming session durations
+          const THRESHOLDS = {
+            MINIMAL: 15 * 60,     // 15 minutes
+            LOW: 45 * 60,         // 45 minutes
+            MEDIUM: 2 * 60 * 60,  // 2 hours
+            HIGH: 4 * 60 * 60,    // 4 hours
+            VERY_HIGH: 8 * 60 * 60 // 8 hours
+          };
+          
+          // Use a stepped approach for more distinct visual differences
+          // This creates clearer "bands" of intensity based on time thresholds
+          if (dominantSec < THRESHOLDS.MINIMAL) {
+            // Very short sessions (< 15 min)
+            intensity = 0.2;
+          } else if (dominantSec < THRESHOLDS.LOW) {
+            // Short sessions (15-45 min)
+            intensity = 0.35;
+          } else if (dominantSec < THRESHOLDS.MEDIUM) {
+            // Medium sessions (45 min - 2 hours)
+            intensity = 0.55;
+          } else if (dominantSec < THRESHOLDS.HIGH) {
+            // Longer sessions (2-4 hours)
+            intensity = 0.75;
+          } else if (dominantSec < THRESHOLDS.VERY_HIGH) {
+            // High usage sessions (4-8 hours)
+            intensity = 0.9;
+          } else {
+            // Very high usage sessions (8+ hours)
+            intensity = 1.0;
+          }
+          
+          // Add a small variation within each band based on the exact duration
+          // This prevents all cells in the same band from looking identical
+          const bandSize = 0.05; // Size of variation within each band
+          
+          // Calculate position within the current band
+          let positionInBand = 0;
+          if (dominantSec < THRESHOLDS.MINIMAL) {
+            positionInBand = dominantSec / THRESHOLDS.MINIMAL;
+          } else if (dominantSec < THRESHOLDS.LOW) {
+            positionInBand = (dominantSec - THRESHOLDS.MINIMAL) / (THRESHOLDS.LOW - THRESHOLDS.MINIMAL);
+          } else if (dominantSec < THRESHOLDS.MEDIUM) {
+            positionInBand = (dominantSec - THRESHOLDS.LOW) / (THRESHOLDS.MEDIUM - THRESHOLDS.LOW);
+          } else if (dominantSec < THRESHOLDS.HIGH) {
+            positionInBand = (dominantSec - THRESHOLDS.MEDIUM) / (THRESHOLDS.HIGH - THRESHOLDS.MEDIUM);
+          } else if (dominantSec < THRESHOLDS.VERY_HIGH) {
+            positionInBand = (dominantSec - THRESHOLDS.HIGH) / (THRESHOLDS.VERY_HIGH - THRESHOLDS.HIGH);
+          } else {
+            positionInBand = Math.min(1, (dominantSec - THRESHOLDS.VERY_HIGH) / THRESHOLDS.VERY_HIGH);
+          }
+          
+          // Apply the variation within the band
+          intensity += (positionInBand * bandSize) - (bandSize / 2);
+          
+          // Ensure intensity stays within bounds
+          intensity = Math.max(0.15, Math.min(1, intensity));
+        }
+        
+        // Determine cell color with improved contrast and theme awareness
+        let cellColor;
+        if (dominantGame && dominantSec > 0) {
+          const baseColor = gameColorMap[dominantGame];
+          // adjustColor now handles theme-specific adjustments automatically
+          cellColor = adjustColor(baseColor, intensity);
+        } else {
+          // For cells with no data, use a semi-transparent version of the no-data color
+          // The opacity varies based on whether it's selected or not
+          cellColor = getNoDataColorWithOpacity(selectedDate === dayStr ? 0.5 : 0.3);
+        }
+        
+        // Add a data attribute for the intensity value - useful for debugging and testing
+        const intensityPercent = Math.round(intensity * 100);
         
         // Create cell with appropriate class
         const classNames = ['day-cell', 'position-relative'];
@@ -69,11 +141,12 @@ export function createHeatmapGrid(
         if (weekIndex === 0) classNames.push('first-in-column');
         if (weekIndex === weeks.length - 1) classNames.push('last-in-column');
         
-        // Create cell with tooltip
+        // Create cell with tooltip and intensity data attribute
         cell = createElement('div', {}, {
           className: classNames.join(' '),
           style: `background-color: ${cellColor};`,
-          title: `${date.toLocaleDateString()} - ${sumSeconds > 0 ? formatDuration(sumSeconds) : 'No activity'}`
+          title: `${date.toLocaleDateString()} - ${sumSeconds > 0 ? formatDuration(sumSeconds) : 'No activity'}`,
+          'data-intensity': intensityPercent
         });
         
         // Store data for hover/click

@@ -9,7 +9,7 @@
  * Current version of the card
  * @type {string}
  */
-export const CARD_VERSION = '3.1.1';
+export const CARD_VERSION = '3.2.0';
 
 /**
  * Material Design inspired color palette for heatmap
@@ -39,7 +39,6 @@ export const DEFAULT_CONFIG = {
   days_to_show: 365,
   ignored_states: ['unknown', 'idle', 'offline', ''],
   refresh_interval: 5 * 60, // seconds
-  theme: 'dark',
   start_day_of_week: 'monday', // can be "monday" or "sunday"
 };
 
@@ -56,18 +55,28 @@ export const LAYOUT = {
 };
 
 /**
- * Theme color constants
+ * CSS variables for theming
+ * These are the Home Assistant CSS variables used for theming with fallbacks
  * @type {Object}
  */
-export const THEME_COLORS = {
-  dark: {
-    primaryText: '#c9d1d9',
-    secondaryText: '#8b949e',
-    noDataColor: '#757575',
-  },
-  light: {
-    primaryText: '#333',
-    secondaryText: '#888',
-    noDataColor: '#E0E0E0',
-  }
+export const CSS_VARIABLES = {
+  // Text colors
+  primaryText: 'var(--primary-text-color, #c9d1d9)',
+  secondaryText: 'var(--secondary-text-color, #8b949e)',
+  
+  // Background colors
+  cardBackground: 'var(--ha-card-background, var(--card-background-color, #1c1c1c))',
+  secondaryBackground: 'var(--secondary-background-color, #2d333b)',
+  
+  // Heatmap specific colors
+  noDataColor: 'var(--calendar-heatmap-no-data-color, var(--disabled-text-color, #757575))',
+  level1Color: 'var(--calendar-heatmap-level-1, var(--success-color, #c6e48b))',
+  level2Color: 'var(--calendar-heatmap-level-2, var(--primary-color, #7bc96f))',
+  level3Color: 'var(--calendar-heatmap-level-3, var(--accent-color, #239a3b))',
+  level4Color: 'var(--calendar-heatmap-level-4, var(--state-active-color, #196127))',
+  
+  // UI elements
+  dividerColor: 'var(--divider-color, #444c56)',
+  cardBoxShadow: 'var(--ha-card-box-shadow, 0 2px 5px rgba(0,0,0,0.26))',
+  cardBorderRadius: 'var(--ha-card-border-radius, 4px)'
 }; 
