@@ -4,7 +4,7 @@
  * This module provides utility functions for color manipulation and generation.
  */
 
-import { MATERIAL_COLORS, CSS_VARIABLES } from "../constants.js";
+import { MATERIAL_COLORS, CSS_VARIABLES } from '../constants.js';
 
 /**
  * Generates a consistent color for a given string (e.g., game name)
@@ -15,7 +15,7 @@ import { MATERIAL_COLORS, CSS_VARIABLES } from "../constants.js";
  * @returns {string} A hex color code from the MATERIAL_COLORS palette, adjusted for theme
  */
 export function getGameColor(name) {
-  if (!name || typeof name !== "string") {
+  if (!name || typeof name !== 'string') {
     return MATERIAL_COLORS[0]; // Default to first color for invalid inputs
   }
 
@@ -43,7 +43,7 @@ export function getGameColor(name) {
  */
 function adjustColorForTheme(hexColor) {
   // Parse the color
-  const cleanHex = hexColor.startsWith("#") ? hexColor.slice(1) : hexColor;
+  const cleanHex = hexColor.startsWith('#') ? hexColor.slice(1) : hexColor;
 
   try {
     const r = parseInt(cleanHex.slice(0, 2), 16);
@@ -89,18 +89,18 @@ function adjustColorForTheme(hexColor) {
 function isCurrentThemeDark() {
   try {
     // Check if we have access to document
-    if (typeof document === "undefined") return true; // Default to dark theme
+    if (typeof document === 'undefined') return true; // Default to dark theme
 
     // Try to get the background color of the document or a card
     const bgColor =
       getComputedStyle(document.documentElement)
-        .getPropertyValue("--card-background-color")
+        .getPropertyValue('--card-background-color')
         .trim() ||
       getComputedStyle(document.documentElement)
-        .getPropertyValue("--ha-card-background")
+        .getPropertyValue('--ha-card-background')
         .trim() ||
       getComputedStyle(document.documentElement)
-        .getPropertyValue("--primary-background-color")
+        .getPropertyValue('--primary-background-color')
         .trim();
 
     // If we have a background color, check its luminance
@@ -118,12 +118,12 @@ function isCurrentThemeDark() {
 
     // Check if there's a dark class on the document
     return (
-      document.documentElement.classList.contains("dark") ||
-      document.documentElement.classList.contains("darkMode") ||
-      document.documentElement.classList.contains("ha-dark")
+      document.documentElement.classList.contains('dark') ||
+      document.documentElement.classList.contains('darkMode') ||
+      document.documentElement.classList.contains('ha-dark')
     );
   } catch (error) {
-    console.warn("Error detecting theme:", error);
+    console.warn('Error detecting theme:', error);
     return true; // Default to dark theme
   }
 }
@@ -137,11 +137,11 @@ function isCurrentThemeDark() {
  */
 function rgbToHex(r, g, b) {
   return (
-    "#" +
+    '#' +
     [r, g, b]
       .map((x) => Math.round(x))
-      .map((x) => x.toString(16).padStart(2, "0"))
-      .join("")
+      .map((x) => x.toString(16).padStart(2, '0'))
+      .join('')
   );
 }
 
@@ -186,14 +186,14 @@ function calculateContrastRatio(luminance1, luminance2) {
  */
 function parseColor(color) {
   // Handle CSS variables
-  if (color.startsWith("var(")) {
+  if (color.startsWith('var(')) {
     // For CSS variables, we can't parse them directly
     // Return a default color that will be visible in most themes
     return { r: 128, g: 128, b: 128 };
   }
 
   // Handle hex colors
-  if (color.startsWith("#")) {
+  if (color.startsWith('#')) {
     const hex = color.slice(1);
     // Handle shorthand hex (#RGB)
     if (hex.length === 3) {
@@ -237,12 +237,12 @@ function parseColor(color) {
  */
 export function adjustColor(hex, factor) {
   // Validate inputs
-  if (!hex || typeof hex !== "string") {
+  if (!hex || typeof hex !== 'string') {
     return getNoDataColorWithOpacity(0.5);
   }
 
   // If the color is a CSS variable, we need special handling
-  if (hex.startsWith("var(")) {
+  if (hex.startsWith('var(')) {
     // For very low factors, return the no-data color with appropriate opacity
     if (factor < 0.05) {
       return getNoDataColorWithOpacity(0.3);
@@ -263,7 +263,7 @@ export function adjustColor(hex, factor) {
   }
 
   // Remove # if present
-  const cleanHex = hex.startsWith("#") ? hex.slice(1) : hex;
+  const cleanHex = hex.startsWith('#') ? hex.slice(1) : hex;
 
   // Parse RGB components
   let r, g, b;
@@ -274,7 +274,7 @@ export function adjustColor(hex, factor) {
 
     // Check if parsing was successful
     if (isNaN(r) || isNaN(g) || isNaN(b)) {
-      throw new Error("Invalid hex color");
+      throw new Error('Invalid hex color');
     }
   } catch (error) {
     console.warn(`Invalid hex color: ${hex}. Using fallback.`);
@@ -472,15 +472,15 @@ export function getNoDataColorWithOpacity(opacity = 0.5) {
   const clampedOpacity = Math.max(0, Math.min(1, opacity));
 
   // If we're using CSS variables, we need to handle this differently
-  if (CSS_VARIABLES.noDataColor.startsWith("var(")) {
+  if (CSS_VARIABLES.noDataColor.startsWith('var(')) {
     // For CSS variables, we'll return a rgba version with the specified opacity
     return `rgba(var(--disabled-text-color-rgb, 117, 117, 117), ${clampedOpacity})`;
   }
 
   // Parse the color if it's a hex value
-  const noDataColor = CSS_VARIABLES.noDataColor.startsWith("#")
+  const noDataColor = CSS_VARIABLES.noDataColor.startsWith('#')
     ? CSS_VARIABLES.noDataColor
-    : "#757575"; // Default fallback
+    : '#757575'; // Default fallback
 
   try {
     const hex = noDataColor.slice(1);

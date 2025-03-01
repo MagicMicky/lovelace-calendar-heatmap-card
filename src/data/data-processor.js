@@ -1,5 +1,5 @@
-import { getGameColor } from "../utils/color-utils.js";
-import { isValidDate } from "../utils/date-utils.js";
+import { getGameColor } from '../utils/color-utils.js';
+import { isValidDate } from '../utils/date-utils.js';
 
 /**
  * Process history data into daily totals
@@ -18,7 +18,7 @@ export function processDailyTotals(historyData, ignoredStates) {
     historyData.length === 0 ||
     !Array.isArray(historyData[0])
   ) {
-    console.warn("Calendar Heatmap: Invalid history data format");
+    console.warn('Calendar Heatmap: Invalid history data format');
     return dailyTotals;
   }
 
@@ -68,7 +68,7 @@ export function processDailyTotals(historyData, ignoredStates) {
           continue;
         }
       } catch (error) {
-        console.warn("Calendar Heatmap: Error parsing timestamps", error);
+        console.warn('Calendar Heatmap: Error parsing timestamps', error);
         skippedEntries++;
         continue;
       }
@@ -91,11 +91,11 @@ export function processDailyTotals(historyData, ignoredStates) {
       if (i < 5) {
         // eslint-disable-next-line no-console
         console.log(
-          "Calendar Heatmap: Entry",
+          'Calendar Heatmap: Entry',
           i,
-          "state:",
+          'state:',
           currentState,
-          "timestamp:",
+          'timestamp:',
           currentTimestamp,
         );
       }
@@ -116,7 +116,7 @@ export function processDailyTotals(historyData, ignoredStates) {
       }
 
       // Get the date string (YYYY-MM-DD)
-      const dayStr = currentTimestamp.toISOString().split("T")[0];
+      const dayStr = currentTimestamp.toISOString().split('T')[0];
 
       // Initialize the day if needed
       if (!dailyTotals[dayStr]) {
@@ -136,7 +136,7 @@ export function processDailyTotals(historyData, ignoredStates) {
       `Calendar Heatmap: Processed ${processedEntries} entries, skipped ${skippedEntries} entries`,
     );
   } catch (error) {
-    console.error("Calendar Heatmap: Error processing history data", error);
+    console.error('Calendar Heatmap: Error processing history data', error);
   }
 
   return dailyTotals;
@@ -203,7 +203,7 @@ export function calculateOverallTotals(dailyTotals) {
  * @returns {Object} Object with bestGame and bestSec properties
  */
 export function findMostPlayedGame(overallTotals) {
-  let bestGame = "";
+  let bestGame = '';
   let bestSec = 0;
 
   for (const game in overallTotals) {
@@ -222,7 +222,7 @@ export function findMostPlayedGame(overallTotals) {
  * @returns {Object} Object with dominantGame and dominantSec properties
  */
 export function findDominantGame(statesObj) {
-  let dominantGame = "";
+  let dominantGame = '';
   let dominantSec = 0;
 
   for (const [game, secs] of Object.entries(statesObj)) {

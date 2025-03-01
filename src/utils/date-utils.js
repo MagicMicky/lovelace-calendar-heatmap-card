@@ -19,7 +19,7 @@ export function createSafeDate(input, fallback = new Date()) {
       return isValidDate(input) ? input : fallback;
     }
 
-    if (typeof input === "string" || typeof input === "number") {
+    if (typeof input === 'string' || typeof input === 'number') {
       const date = new Date(input);
       return isValidDate(date) ? date : fallback;
     }
@@ -27,7 +27,7 @@ export function createSafeDate(input, fallback = new Date()) {
     return fallback;
   } catch (error) {
     console.warn(
-      "Calendar Heatmap: Error creating date, using fallback",
+      'Calendar Heatmap: Error creating date, using fallback',
       error,
     );
     return fallback;
@@ -65,7 +65,7 @@ export function calculateMaxWeeks(availableWidth, weekColWidth) {
  * @param {string} startDayOfWeek - Day to start the week on ('monday' or 'sunday')
  * @returns {Date} The start date for the heatmap
  */
-export function getHeatmapStartDate(maxWeeks = 52, startDayOfWeek = "monday") {
+export function getHeatmapStartDate(maxWeeks = 52, startDayOfWeek = 'monday') {
   // Create a safe now date
   const now = new Date();
 
@@ -79,7 +79,7 @@ export function getHeatmapStartDate(maxWeeks = 52, startDayOfWeek = "monday") {
   // Validate the calculated date
   if (!isValidDate(startDate)) {
     console.warn(
-      "Calendar Heatmap: Invalid start date calculated, using 30 days ago",
+      'Calendar Heatmap: Invalid start date calculated, using 30 days ago',
     );
     startDate = new Date(now);
     startDate.setDate(now.getDate() - 30);
@@ -88,7 +88,7 @@ export function getHeatmapStartDate(maxWeeks = 52, startDayOfWeek = "monday") {
   // Adjust startDate to the previous start day of week
   const dayOfWeek = startDate.getDay(); // 0 = Sunday, 1 = Monday, etc.
 
-  if (startDayOfWeek === "monday") {
+  if (startDayOfWeek === 'monday') {
     // Adjust to previous Monday (if day is 0/Sunday, go back 6 days, if day is 1/Monday, go back 0 days)
     const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
     startDate.setDate(startDate.getDate() - daysToSubtract);
@@ -108,7 +108,7 @@ export function getHeatmapStartDate(maxWeeks = 52, startDayOfWeek = "monday") {
 export function buildWeeksArray(startDate) {
   // Validate input
   if (!isValidDate(startDate)) {
-    console.warn("Calendar Heatmap: Invalid start date, using 30 days ago");
+    console.warn('Calendar Heatmap: Invalid start date, using 30 days ago');
     startDate = getHeatmapStartDate(30);
   }
 
@@ -156,7 +156,7 @@ export function buildWeeksArray(startDate) {
 export function groupWeeksByMonth(weeks) {
   // Validate input
   if (!Array.isArray(weeks) || weeks.length === 0) {
-    console.warn("Calendar Heatmap: Invalid weeks array");
+    console.warn('Calendar Heatmap: Invalid weeks array');
     return [];
   }
 
@@ -178,7 +178,7 @@ export function groupWeeksByMonth(weeks) {
     }
 
     const month = firstDay.getMonth();
-    const monthName = firstDay.toLocaleString("default", { month: "short" });
+    const monthName = firstDay.toLocaleString('default', { month: 'short' });
 
     if (!currentGroup) {
       currentGroup = { month, monthName, count: 1 };
@@ -204,20 +204,20 @@ export function groupWeeksByMonth(weeks) {
  * @returns {Array} Array of day names starting with the specified start day
  */
 export function getLocalizedDayNames(
-  startDayOfWeek = "monday",
+  startDayOfWeek = 'monday',
   locale = undefined,
 ) {
   const days = [];
   const date = new Date(2000, 0, 2); // Start with a Sunday (Jan 2, 2000)
 
   // If we start with Monday, we need to start with Jan 3, 2000
-  if (startDayOfWeek === "monday") {
+  if (startDayOfWeek === 'monday') {
     date.setDate(3);
   }
 
   // Get 7 days starting from our start day
   for (let i = 0; i < 7; i++) {
-    days.push(date.toLocaleString(locale, { weekday: "short" }));
+    days.push(date.toLocaleString(locale, { weekday: 'short' }));
     date.setDate(date.getDate() + 1);
   }
 
