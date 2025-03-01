@@ -9,7 +9,7 @@
  * Current version of the card
  * @type {string}
  */
-export const CARD_VERSION = '3.2.0';
+export const CARD_VERSION = '3.3.0';
 
 /**
  * Material Design inspired color palette for heatmap
