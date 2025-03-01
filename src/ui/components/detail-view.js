@@ -1,5 +1,6 @@
 import { createElement } from '../../utils/dom-utils.js';
 import { formatDuration } from '../../utils/format-utils.js';
+import { adjustColor } from '../../utils/color-utils.js';
 
 /**
  * Create a game item for the detail view
@@ -16,9 +17,15 @@ function createGameItem(game, secs, color, totalSecs) {
     className: 'game-item'
   });
   
+  // Calculate the intensity based on percentage of total
+  const intensity = totalSecs > 0 ? Math.min(1, (secs / totalSecs) * 1.5) : 0.7;
+  
+  // Use adjustColor to ensure the color has good contrast
+  const adjustedColor = adjustColor(color, intensity);
+  
   const colorSwatch = createElement('div', {}, {
     className: 'game-color',
-    style: `background: ${color};`
+    style: `background: ${adjustedColor}; border: 1px solid rgba(0,0,0,0.1);`
   });
   
   const gameName = createElement('div', {}, {

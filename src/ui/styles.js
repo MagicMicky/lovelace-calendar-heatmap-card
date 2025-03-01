@@ -36,6 +36,9 @@ export function getStyles() {
       --heatmap-card-background: var(--ha-card-background, var(--card-background-color));
       --heatmap-secondary-background: var(--secondary-background-color);
       
+      /* RGB versions of colors for opacity support */
+      --disabled-text-color-rgb: 117, 117, 117;
+      
       /* Heatmap specific colors */
       --heatmap-no-data-color: var(--calendar-heatmap-no-data-color, var(--disabled-text-color));
       --heatmap-level-1: var(--calendar-heatmap-level-1, var(--success-color));
@@ -253,17 +256,35 @@ export function getStyles() {
       border-radius: 2px;
       box-sizing: border-box;
       cursor: pointer;
-      transition: transform 0.1s ease-in-out;
+      transition: transform 0.1s ease-in-out, box-shadow 0.1s ease-in-out, border-color 0.1s ease-in-out;
+      border: 1px solid rgba(0, 0, 0, 0.05);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+      position: relative;
     }
     
     .day-cell:hover {
       transform: scale(1.15);
       z-index: 10;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+      border-color: rgba(0, 0, 0, 0.1);
     }
     
     .day-cell.selected {
       border: 2px solid var(--heatmap-primary-text);
-      box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
+      box-shadow: 0 0 6px rgba(0, 0, 0, 0.3);
+    }
+    
+    /* Add subtle inner shadow to enhance depth perception of intensity */
+    .day-cell::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border-radius: 1px;
+      box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+      pointer-events: none;
     }
     
     .empty-cell {
