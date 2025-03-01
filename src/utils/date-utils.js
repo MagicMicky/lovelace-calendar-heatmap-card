@@ -32,20 +32,37 @@ export function createSafeDate(input, fallback = new Date()) {
 }
 
 /**
- * Get the start date for the heatmap (days_to_show days ago, adjusted to previous Sunday or Monday)
- * @param {number} daysToShow - Number of days to show in the heatmap
+ * Calculate the maximum number of weeks that can fit in the available space
+ * @param {number} availableWidth - Available width in pixels
+ * @param {number} weekColWidth - Width of a week column in pixels
+ * @returns {number} Maximum number of weeks that can fit
+ */
+export function calculateMaxWeeks(availableWidth, weekColWidth) {
+  if (!availableWidth || availableWidth <= 0 || !weekColWidth || weekColWidth <= 0) {
+    // Default to 52 weeks (1 year) if we can't calculate
+    return 52;
+  }
+  
+  // Calculate max weeks that can fit in the available space
+  // Subtract some padding to ensure we don't overflow
+  const maxWeeks = Math.floor((availableWidth - 30) / weekColWidth);
+  
+  // Ensure we show at least 4 weeks and at most 52 weeks (1 year)
+  return Math.max(4, Math.min(52, maxWeeks));
+}
+
+/**
+ * Get the start date for the heatmap based on the maximum number of weeks that can fit
+ * @param {number} maxWeeks - Maximum number of weeks to show
  * @param {string} startDayOfWeek - Day to start the week on ('monday' or 'sunday')
  * @returns {Date} The start date for the heatmap
  */
-export function getHeatmapStartDate(daysToShow, startDayOfWeek = 'monday') {
-  // Validate input
-  if (!daysToShow || typeof daysToShow !== 'number' || daysToShow <= 0) {
-    console.warn('Calendar Heatmap: Invalid daysToShow, using default of 30 days');
-    daysToShow = 30;
-  }
-  
+export function getHeatmapStartDate(maxWeeks = 52, startDayOfWeek = 'monday') {
   // Create a safe now date
   const now = new Date();
+  
+  // Calculate days to show based on maxWeeks
+  const daysToShow = maxWeeks * 7;
   
   // Calculate start date
   let startDate = new Date(now);
@@ -95,14 +112,28 @@ export function buildWeeksArray(startDate) {
   
   while (currentDate <= now && weekCount < maxWeeks) {
     const week = [];
+    const weekStartDay = new Date(currentDate); // Store the start of this week
+    
     for (let d = 0; d < 7; d++) {
       if (currentDate <= now) {
         week.push(new Date(currentDate));
+      } else {
+        // Add empty placeholder for future dates to maintain grid alignment
+        week.push(null);
       }
       currentDate.setDate(currentDate.getDate() + 1);
     }
-    weeks.push(week);
-    weekCount++;
+    
+    // Only add the week if it has at least one valid day
+    if (week.some(day => day !== null)) {
+      weeks.push(week);
+      weekCount++;
+    }
+    
+    // If we've gone past today, break the loop
+    if (currentDate > now) {
+      break;
+    }
   }
   
   return weeks;
