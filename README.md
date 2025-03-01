@@ -1,6 +1,7 @@
 # Calendar Heatmap Card
 
 [![HACS Badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/custom-components/hacs)
+[![HACS Validation](https://github.com/MagicMicky/lovelace-calendar-heatmap-card/workflows/HACS%20Validation/badge.svg)](https://github.com/MagicMicky/lovelace-calendar-heatmap-card/actions/workflows/hacs.yml)
 [![GitHub Release](https://img.shields.io/github/release/MagicMicky/lovelace-calendar-heatmap-card.svg)](https://github.com/MagicMicky/lovelace-calendar-heatmap-card/releases)
 [![License](https://img.shields.io/github/license/MagicMicky/lovelace-calendar-heatmap-card.svg)](LICENSE)
 
