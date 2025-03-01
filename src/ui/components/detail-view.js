@@ -4,7 +4,7 @@ import { adjustColor } from '../../utils/color-utils.js';
 
 /**
  * Create a game item for the detail view
- * Uses CSS variables for theming
+ * Uses CSS variables for theming and theme-aware color adjustments
  * 
  * @param {string} game - Game name
  * @param {number} secs - Seconds played
@@ -18,9 +18,11 @@ function createGameItem(game, secs, color, totalSecs) {
   });
   
   // Calculate the intensity based on percentage of total
-  const intensity = totalSecs > 0 ? Math.min(1, (secs / totalSecs) * 1.5) : 0.7;
+  // Use a more balanced approach for detail view items
+  const percentage = totalSecs > 0 ? (secs / totalSecs) : 0;
+  const intensity = Math.min(1, Math.sqrt(percentage) * 1.2);
   
-  // Use adjustColor to ensure the color has good contrast
+  // Use adjustColor to ensure the color has good contrast and is theme-aware
   const adjustedColor = adjustColor(color, intensity);
   
   const colorSwatch = createElement('div', {}, {
@@ -40,10 +42,10 @@ function createGameItem(game, secs, color, totalSecs) {
   
   // Add percentage if totalSecs is provided
   if (totalSecs > 0) {
-    const percentage = Math.round((secs / totalSecs) * 100);
+    const percentValue = Math.round((secs / totalSecs) * 100);
     const percentageElement = createElement('div', {}, {
       className: 'summary-percentage',
-      textContent: `(${percentage}%)`,
+      textContent: `(${percentValue}%)`,
     });
     
     item.appendChild(colorSwatch);

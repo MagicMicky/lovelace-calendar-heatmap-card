@@ -114,16 +114,20 @@ export function createHeatmapGrid(
           intensity = Math.max(0.15, Math.min(1, intensity));
         }
         
-        // Determine cell color with improved contrast
+        // Determine cell color with improved contrast and theme awareness
         let cellColor;
         if (dominantGame && dominantSec > 0) {
           const baseColor = gameColorMap[dominantGame];
+          // adjustColor now handles theme-specific adjustments automatically
           cellColor = adjustColor(baseColor, intensity);
         } else {
           // For cells with no data, use a semi-transparent version of the no-data color
           // The opacity varies based on whether it's selected or not
           cellColor = getNoDataColorWithOpacity(selectedDate === dayStr ? 0.5 : 0.3);
         }
+        
+        // Add a data attribute for the intensity value - useful for debugging and testing
+        const intensityPercent = Math.round(intensity * 100);
         
         // Create cell with appropriate class
         const classNames = ['day-cell', 'position-relative'];
@@ -137,11 +141,12 @@ export function createHeatmapGrid(
         if (weekIndex === 0) classNames.push('first-in-column');
         if (weekIndex === weeks.length - 1) classNames.push('last-in-column');
         
-        // Create cell with tooltip
+        // Create cell with tooltip and intensity data attribute
         cell = createElement('div', {}, {
           className: classNames.join(' '),
           style: `background-color: ${cellColor};`,
-          title: `${date.toLocaleDateString()} - ${sumSeconds > 0 ? formatDuration(sumSeconds) : 'No activity'}`
+          title: `${date.toLocaleDateString()} - ${sumSeconds > 0 ? formatDuration(sumSeconds) : 'No activity'}`,
+          'data-intensity': intensityPercent
         });
         
         // Store data for hover/click
