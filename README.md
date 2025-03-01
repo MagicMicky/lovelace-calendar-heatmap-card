@@ -60,7 +60,6 @@ Add the card to your Lovelace dashboard:
 type: custom:calendar-heatmap-card
 entity: sensor.game_activity
 title: My Gaming Activity
-days_to_show: 365
 ```
 
 ### Configuration Options
