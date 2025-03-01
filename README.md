@@ -1,6 +1,7 @@
 # Calendar Heatmap Card
 
 [![HACS Badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/custom-components/hacs)
+[![HACS Validation](https://github.com/MagicMicky/lovelace-calendar-heatmap-card/workflows/HACS%20Validation/badge.svg)](https://github.com/MagicMicky/lovelace-calendar-heatmap-card/actions/workflows/hacs.yml)
 [![GitHub Release](https://img.shields.io/github/release/MagicMicky/lovelace-calendar-heatmap-card.svg)](https://github.com/MagicMicky/lovelace-calendar-heatmap-card/releases)
 [![License](https://img.shields.io/github/license/MagicMicky/lovelace-calendar-heatmap-card.svg)](LICENSE)
 
@@ -8,7 +9,7 @@
 
 A custom Lovelace card for Home Assistant that visualizes entity activity data as a calendar heatmap, similar to GitHub's contribution graph. Perfect for tracking game activity, device usage, or any time-based data.
 
-![Calendar Heatmap Card](https://raw.githubusercontent.com/MagicMicky/lovelace-calendar-heatmap-card/main/docs/images/card-preview.png)
+![Calendar Heatmap Card](https://raw.githubusercontent.com/MagicMicky/lovelace-calendar-heatmap-card/main/docs/images/calendar-heatmap.png)
 
 ## Features
 
@@ -59,7 +60,6 @@ Add the card to your Lovelace dashboard:
 type: custom:calendar-heatmap-card
 entity: sensor.game_activity
 title: My Gaming Activity
-days_to_show: 365
 ```
 
 ### Configuration Options
@@ -68,7 +68,6 @@ days_to_show: 365
 |--------|------|---------|-------------|
 | `entity` | string | (Required) | Entity ID to display history for |
 | `title` | string | "Game Activity" | Card title |
-| `days_to_show` | number | 365 | Number of days of history to display (Note: In v3.3.0+, the actual display is automatically adjusted based on available space) |
 | `ignored_states` | array | ["unknown", "idle", "offline", ""] | States to ignore in calculations |
 | `refresh_interval` | number | 300 | Refresh interval in seconds |
 | `start_day_of_week` | string | "monday" | Day to start the week on ("monday" or "sunday") |
@@ -209,8 +208,8 @@ The Calendar Heatmap Card will:
 
 This gives you a beautiful visualization of your gaming habits over time, showing which days you played the most and which games dominated your play time.
 
-![Discord Gaming Activity Example](https://raw.githubusercontent.com/MagicMicky/lovelace-calendar-heatmap-card/main/docs/images/discord-example.png)
-*Example of Discord gaming activity visualization (you may want to replace this with your own screenshot)*
+![Discord Gaming Activity Example](https://raw.githubusercontent.com/MagicMicky/lovelace-calendar-heatmap-card/main/docs/images/calendar-heatmap.png)
+*Example of Discord gaming activity visualization*
 
 ## Troubleshooting
 
