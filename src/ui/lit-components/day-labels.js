@@ -15,12 +15,12 @@ export class DayLabels extends LitElement {
 
   static get styles() {
     const { cellWidth, cellMargin } = CELL_DIMENSIONS;
-    
+
     return css`
       :host {
         display: block;
       }
-      
+
       .day-labels {
         display: flex;
         flex-direction: column;
@@ -38,7 +38,7 @@ export class DayLabels extends LitElement {
         margin-top: 0;
         margin-bottom: 0;
       }
-      
+
       .day-label {
         height: ${cellWidth}px;
         margin-bottom: ${cellMargin}px;
@@ -59,21 +59,25 @@ export class DayLabels extends LitElement {
   render() {
     // Get localized day names
     const dayNamesArr = getLocalizedDayNames(this.startDayOfWeek);
-    
+
     // Only show Monday (index 0), Wednesday (index 2) and Friday (index 4) when starting with Monday
     // Or Sunday (index 0), Tuesday (index 2) and Thursday (index 4) when starting with Sunday
     const displayIndices = [0, 2, 4];
-    
+
     return html`
       <div class="day-labels">
-        ${Array(7).fill(0).map((_, i) => html`
-          <div class="day-label">
-            ${displayIndices.includes(i) ? dayNamesArr[i] : ''}
-          </div>
-        `)}
+        ${Array(7)
+          .fill(0)
+          .map(
+            (_, i) => html`
+              <div class="day-label">
+                ${displayIndices.includes(i) ? dayNamesArr[i] : ''}
+              </div>
+            `,
+          )}
       </div>
     `;
   }
 }
 
-customElements.define('day-labels', DayLabels); 
+customElements.define('day-labels', DayLabels);

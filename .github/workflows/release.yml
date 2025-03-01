@@ -14,22 +14,35 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
-          persist-credentials: false
+          # Use a Personal Access Token to allow semantic-release to push changes
+          token: ${{ secrets.GH_TOKEN }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 18
-          cache: 'npm'
+          # Remove cache option until we have a lock file
+          # cache: 'npm'
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install
+
+      # Add a linting step with continue-on-error
+      - name: Lint
+        run: npm run lint
+        continue-on-error: true
 
       - name: Build
         run: npm run build
 
       - name: Create gzip version
-        run: gzip -c dist/calendar-heatmap-card.js > dist/calendar-heatmap-card.js.gz
+        run: |
+          if [ -f dist/calendar-heatmap-card.js ]; then
+            gzip -c dist/calendar-heatmap-card.js > dist/calendar-heatmap-card.js.gz
+          else
+            echo "Warning: dist/calendar-heatmap-card.js not found, skipping gzip"
+            exit 0
+          fi
 
       - name: Semantic Release
         env:

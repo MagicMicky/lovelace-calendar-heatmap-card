@@ -15,14 +15,15 @@ console.info(
 );
 
 // Register the custom element
-customElements.define("calendar-heatmap-card", CalendarHeatmapCard);
+customElements.define('calendar-heatmap-card', CalendarHeatmapCard);
 
 // Add card to CUSTOM_CARD_HELPERS for better integration with Home Assistant
 window.customCards = window.customCards || [];
 window.customCards.push({
-  type: "calendar-heatmap-card",
-  name: "Calendar Heatmap Card",
-  description: "A calendar heatmap card for visualizing entity activity data",
+  type: 'calendar-heatmap-card',
+  name: 'Calendar Heatmap Card',
+  description: 'A calendar heatmap card for visualizing entity activity data',
   preview: true,
-  documentationURL: "https://github.com/MagicMicky/lovelace-calendar-heatmap-card",
-}); 
+  documentationURL:
+    'https://github.com/MagicMicky/lovelace-calendar-heatmap-card',
+});

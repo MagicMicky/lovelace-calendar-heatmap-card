@@ -5,5 +5,5 @@
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 
-# Now run commitlint
-npx --no -- commitlint --edit ${1}
+# Run lint-staged
+npx lint-staged

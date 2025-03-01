@@ -17,7 +17,7 @@ export class MonthHeader extends LitElement {
       :host {
         display: block;
       }
-      
+
       .month-header {
         display: flex;
         margin-left: 36px;
@@ -32,7 +32,7 @@ export class MonthHeader extends LitElement {
         white-space: nowrap;
         padding-left: 3px;
       }
-      
+
       .month-label {
         text-align: center;
         display: inline-block;
@@ -49,15 +49,15 @@ export class MonthHeader extends LitElement {
 
   render() {
     const { weekColWidth } = CELL_DIMENSIONS;
-    
+
     // Calculate total width to ensure proper alignment
     const totalWidth = this.monthGroups.reduce((total, group) => {
-      return total + (group.count * weekColWidth);
+      return total + group.count * weekColWidth;
     }, 0);
-    
+
     return html`
       <div class="month-header" style="min-width: ${totalWidth}px;">
-        ${this.monthGroups.map(group => {
+        ${this.monthGroups.map((group) => {
           const width = group.count * weekColWidth;
           return html`
             <div class="month-label" style="width: ${width}px;">
@@ -70,4 +70,4 @@ export class MonthHeader extends LitElement {
   }
 }
 
-customElements.define('month-header', MonthHeader); 
+customElements.define('month-header', MonthHeader);

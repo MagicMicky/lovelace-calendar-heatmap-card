@@ -11,38 +11,42 @@ export function processDailyTotals(historyData, ignoredStates) {
   let dailyTotals = {};
   let skippedEntries = 0;
   let processedEntries = 0;
-  
+
   // Validate input
-  if (!Array.isArray(historyData) || historyData.length === 0 || !Array.isArray(historyData[0])) {
+  if (
+    !Array.isArray(historyData) ||
+    historyData.length === 0 ||
+    !Array.isArray(historyData[0])
+  ) {
     console.warn('Calendar Heatmap: Invalid history data format');
     return dailyTotals;
   }
-  
+
   // Ensure ignoredStates is an array
   if (!Array.isArray(ignoredStates)) {
     ignoredStates = [];
   }
-  
+
   try {
     const entityHistory = historyData[0];
-    
+
     for (let i = 0; i < entityHistory.length - 1; i++) {
       const current = entityHistory[i];
       const next = entityHistory[i + 1];
-      
+
       // Skip if either entry is missing
       if (!current || !next) {
         skippedEntries++;
         continue;
       }
-      
+
       // Handle both standard and compressed formats
       // Compressed format uses 's' for state, 'lu' for last_updated/last_changed
       const currentState = current?.state || current?.s;
-      
+
       // Get timestamps, handling both formats
       let currentTimestamp, nextTimestamp;
-      
+
       try {
         if (current.last_changed) {
           currentTimestamp = new Date(current.last_changed);
@@ -53,7 +57,7 @@ export function processDailyTotals(historyData, ignoredStates) {
           skippedEntries++;
           continue;
         }
-        
+
         if (next.last_changed) {
           nextTimestamp = new Date(next.last_changed);
         } else if (next.lu) {
@@ -68,63 +72,73 @@ export function processDailyTotals(historyData, ignoredStates) {
         skippedEntries++;
         continue;
       }
-      
+
       // Validate dates
       if (!isValidDate(currentTimestamp) || !isValidDate(nextTimestamp)) {
         skippedEntries++;
         continue;
       }
-      
+
       // Skip entries with missing required properties
       if (!currentState) {
         skippedEntries++;
         continue;
       }
-      
+
       const stateLower = currentState.toLowerCase();
-      
+
       // Log the first few entries to understand the data format
       if (i < 5) {
-        console.log('Calendar Heatmap: Entry', i, 'state:', currentState, 'timestamp:', currentTimestamp);
+        // eslint-disable-next-line no-console
+        console.log(
+          'Calendar Heatmap: Entry',
+          i,
+          'state:',
+          currentState,
+          'timestamp:',
+          currentTimestamp,
+        );
       }
-      
+
       // Skip ignored states
       if (ignoredStates.includes(stateLower)) {
         skippedEntries++;
         continue;
       }
-      
+
       // Calculate time difference
       const diffSeconds = (nextTimestamp - currentTimestamp) / 1000;
-      
+
       // Skip negative or extremely large time differences (more than a day)
       if (diffSeconds <= 0 || diffSeconds > 86400) {
         skippedEntries++;
         continue;
       }
-      
+
       // Get the date string (YYYY-MM-DD)
-      const dayStr = currentTimestamp.toISOString().split("T")[0];
-      
+      const dayStr = currentTimestamp.toISOString().split('T')[0];
+
       // Initialize the day if needed
       if (!dailyTotals[dayStr]) {
         dailyTotals[dayStr] = {};
       }
-      
+
       // Add the seconds to the state's total
       dailyTotals[dayStr][currentState] =
         (dailyTotals[dayStr][currentState] || 0) + diffSeconds;
-      
+
       processedEntries++;
     }
-    
+
     // Log processing summary
-    console.log(`Calendar Heatmap: Processed ${processedEntries} entries, skipped ${skippedEntries} entries`);
-    
+    // eslint-disable-next-line no-console
+    console.log(
+      `Calendar Heatmap: Processed ${processedEntries} entries, skipped ${skippedEntries} entries`,
+    );
   } catch (error) {
     console.error('Calendar Heatmap: Error processing history data', error);
   }
-  
+
   return dailyTotals;
 }
 
@@ -135,13 +149,16 @@ export function processDailyTotals(historyData, ignoredStates) {
  */
 export function calculateMaxValue(dailyTotals) {
   let maxValue = 0;
-  
+
   for (const dayStr in dailyTotals) {
     const statesObj = dailyTotals[dayStr];
-    const sumSeconds = Object.values(statesObj).reduce((acc, val) => acc + val, 0);
+    const sumSeconds = Object.values(statesObj).reduce(
+      (acc, val) => acc + val,
+      0,
+    );
     if (sumSeconds > maxValue) maxValue = sumSeconds;
   }
-  
+
   return maxValue;
 }
 
@@ -153,13 +170,13 @@ export function calculateMaxValue(dailyTotals) {
 export function buildGameColorMap(states) {
   // Create a Set to ensure uniqueness
   const uniqueStates = new Set(states);
-  
+
   // Create color mapping
   const gameColorMap = {};
-  Array.from(uniqueStates).forEach(state => {
+  Array.from(uniqueStates).forEach((state) => {
     gameColorMap[state] = getGameColor(state);
   });
-  
+
   return gameColorMap;
 }
 
@@ -170,13 +187,13 @@ export function buildGameColorMap(states) {
  */
 export function calculateOverallTotals(dailyTotals) {
   let overallTotals = {};
-  
+
   for (const day in dailyTotals) {
     for (const game in dailyTotals[day]) {
       overallTotals[game] = (overallTotals[game] || 0) + dailyTotals[day][game];
     }
   }
-  
+
   return overallTotals;
 }
 
@@ -186,16 +203,16 @@ export function calculateOverallTotals(dailyTotals) {
  * @returns {Object} Object with bestGame and bestSec properties
  */
 export function findMostPlayedGame(overallTotals) {
-  let bestGame = "";
+  let bestGame = '';
   let bestSec = 0;
-  
+
   for (const game in overallTotals) {
     if (overallTotals[game] > bestSec) {
       bestSec = overallTotals[game];
       bestGame = game;
     }
   }
-  
+
   return { bestGame, bestSec };
 }
 
@@ -205,16 +222,16 @@ export function findMostPlayedGame(overallTotals) {
  * @returns {Object} Object with dominantGame and dominantSec properties
  */
 export function findDominantGame(statesObj) {
-  let dominantGame = "";
+  let dominantGame = '';
   let dominantSec = 0;
-  
+
   for (const [game, secs] of Object.entries(statesObj)) {
     if (secs > dominantSec) {
       dominantSec = secs;
       dominantGame = game;
     }
   }
-  
+
   return { dominantGame, dominantSec };
 }
 
@@ -226,10 +243,10 @@ export function findDominantGame(statesObj) {
  */
 export function getColorIndex(seconds, maxValue) {
   if (maxValue <= 0 || seconds <= 0) return 0;
-  
+
   const fraction = seconds / maxValue;
   if (fraction > 0.75) return 4;
   if (fraction > 0.5) return 3;
   if (fraction > 0.25) return 2;
   return 1;
-} 
+}
