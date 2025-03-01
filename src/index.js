@@ -1,6 +1,12 @@
 import { CARD_VERSION } from './constants.js';
 import CalendarHeatmapCard from './calendar-heatmap-card.js';
 
+// Import LitElement components to ensure they're registered
+import './ui/lit-components/heatmap-grid.js';
+import './ui/lit-components/day-labels.js';
+import './ui/lit-components/month-header.js';
+import './ui/lit-components/detail-view.js';
+
 // Log version info
 console.info(
   `%c CALENDAR-HEATMAP-CARD %c ${CARD_VERSION} `,

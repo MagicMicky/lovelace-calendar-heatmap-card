@@ -15,8 +15,7 @@
   "author": "Mickael Goubin",
   "license": "MIT",
   "dependencies": {
-    "lit": "^2.7.0",
-    "home-assistant-js-websocket": "^8.0.1"
+    "lit": "^2.7.0"
   },
   "devDependencies": {
     "@babel/core": "^7.23.5",
