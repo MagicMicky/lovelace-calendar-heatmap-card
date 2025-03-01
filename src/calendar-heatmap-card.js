@@ -58,6 +58,7 @@ class CalendarHeatmapCard extends LitElement {
     this._bestSec = 0;
     this._lastEntityState = null;
     this._lastHistoryTimestamp = 0;
+    this._themeObserver = null; // MutationObserver for theme changes
   }
 
   setConfig(config) {
@@ -98,234 +99,230 @@ class CalendarHeatmapCard extends LitElement {
 
   connectedCallback() {
     super.connectedCallback();
-    if (!this._hasConnected) {
-      this._hasConnected = true;
-      
-      // Ensure data is fetched and detail view is populated on first connection
-      this._fetchData().then(() => {
-        if (this.shadowRoot) {
-          const detailView = this.shadowRoot.querySelector('.detail-view');
-          if (detailView) {
-            this._updateDetailView(this._selectedDate || null);
-          }
-        }
-        
-        // Set up subscription after initial data fetch
-        this._setupSubscription();
-      });
-    } else {
-      // Re-establish subscription if reconnecting
+    this._hasConnected = true;
+    
+    if (this._hass) {
       this._setupSubscription();
     }
+    
+    // Set up theme observer
+    this._setupThemeObserver();
   }
 
   disconnectedCallback() {
     super.disconnectedCallback();
     this._unsubscribeFromEntity();
+    
+    // Clean up theme observer
+    this._removeThemeObserver();
+  }
+  
+  /**
+   * Sets up a MutationObserver to detect theme changes in the document
+   * This allows the card to automatically adapt to theme changes
+   */
+  _setupThemeObserver() {
+    // Clean up any existing observer
+    this._removeThemeObserver();
+    
+    // Create a new observer to watch for theme changes
+    this._themeObserver = new MutationObserver((mutations) => {
+      // When theme attributes change, re-render the card
+      this.requestUpdate();
+    });
+    
+    // Start observing the document for theme changes
+    if (document.documentElement) {
+      this._themeObserver.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['class', 'style'],
+      });
+    }
+    
+    // Also observe the card's parent elements for theme changes
+    // This is needed for cards inside dashboards with different themes
+    setTimeout(() => {
+      try {
+        // Find the card element in the DOM
+        const card = this.shadowRoot?.querySelector('ha-card');
+        if (card) {
+          // Walk up the DOM tree to find theme-able parents
+          let parent = card.parentElement;
+          while (parent && parent !== document.documentElement) {
+            this._themeObserver.observe(parent, {
+              attributes: true,
+              attributeFilter: ['class', 'style'],
+            });
+            parent = parent.parentElement;
+          }
+        }
+      } catch (error) {
+        console.warn('Calendar Heatmap: Error setting up parent theme observers', error);
+      }
+    }, 100);
+  }
+  
+  /**
+   * Removes the theme observer
+   */
+  _removeThemeObserver() {
+    if (this._themeObserver) {
+      this._themeObserver.disconnect();
+      this._themeObserver = null;
+    }
   }
 
-  /**
-   * Set up subscription to entity state changes
-   * @private
-   */
   async _setupSubscription() {
-    // First, clean up any existing subscription
+    // Unsubscribe from any existing subscription
     this._unsubscribeFromEntity();
     
-    if (!this._hass || !this._config || !this._config.entity) {
-      return;
-    }
-    
-    try {
-      // Subscribe to entity state changes
+    // Subscribe to entity changes
+    if (this._hass && this._config && this._config.entity) {
       this._unsubscribe = await subscribeToEntity(
-        this._hass, 
-        this._config.entity, 
-        (stateData) => {
-          // Update last entity state
-          if (stateData.new_state) {
-            this._lastEntityState = stateData.new_state.state;
+        this._hass,
+        this._config.entity,
+        (newState) => {
+          // Only update if the state has actually changed
+          if (!this._lastEntityState || newState.state !== this._lastEntityState.state) {
+            this._lastEntityState = newState;
+            
+            // Check if we should refresh history data
+            const now = Date.now();
+            const refreshInterval = (this._config.refresh_interval || 300) * 1000; // Convert to ms
+            
+            if (now - this._lastHistoryTimestamp > refreshInterval) {
+              this._fetchData();
+            }
           }
-          
-          // Fetch new data with a small delay to allow Home Assistant to update history
-          setTimeout(() => {
-            this._fetchData();
-          }, 2000); // 2 second delay
         }
       );
-    } catch (error) {
-      // Error handled silently
     }
   }
 
-  /**
-   * Unsubscribe from entity state changes
-   * @private
-   */
   _unsubscribeFromEntity() {
-    if (this._unsubscribe && typeof this._unsubscribe === 'function') {
-      try {
-        this._unsubscribe();
-      } catch (error) {
-        // Error handled silently
-      }
+    if (this._unsubscribe) {
+      this._unsubscribe();
       this._unsubscribe = null;
     }
   }
 
   async _fetchData() {
-    if (!this._hass || !this._config) {
-      return Promise.resolve();
-    }
-    
-    const entityId = this._config.entity;
-    const daysToShow = this._config.days_to_show || DEFAULT_CONFIG.days_to_show;
+    if (!this._hass || !this._config) return;
     
     try {
-      // Fetch history data
-      const historyData = await fetchHistory(this._hass, entityId, daysToShow);
+      // Get history data for the entity
+      const startDate = getHeatmapStartDate(this._config.days_to_show, this._config.start_day_of_week);
+      const endDate = new Date(); // Current time
       
-      if (!historyData || historyData.length === 0 || !historyData[0] || historyData[0].length === 0) {
-        return Promise.resolve();
-      }
+      // Fetch history with proper date validation
+      const historyData = await fetchHistory(
+        this._hass, 
+        this._config.entity, 
+        startDate, 
+        endDate
+      );
       
       // Process the data
-      const ignoredStates = this._config.ignored_states || DEFAULT_CONFIG.ignored_states;
+      const ignoredStates = this._config.ignored_states || [];
+      this._dailyTotals = processDailyTotals(historyData, ignoredStates);
+      this._maxValue = calculateMaxValue(this._dailyTotals);
       
-      const dailyTotals = processDailyTotals(historyData, ignoredStates);
+      // Create a color map for games/states
+      const states = Object.values(this._dailyTotals)
+        .flatMap(day => Object.keys(day))
+        .filter(state => !ignoredStates.includes(state));
       
-      if (Object.keys(dailyTotals).length === 0) {
-        return Promise.resolve();
-      }
+      this._gameColorMap = buildGameColorMap(states);
       
-      // Calculate derived data
-      this._dailyTotals = dailyTotals;
-      this._maxValue = calculateMaxValue(dailyTotals);
-      this._gameColorMap = buildGameColorMap(dailyTotals);
-      this._overallTotals = calculateOverallTotals(dailyTotals);
+      // Calculate overall totals and find the most played game
+      this._overallTotals = calculateOverallTotals(this._dailyTotals);
+      const { dominantGame, dominantSec } = findMostPlayedGame(this._overallTotals);
+      this._bestGame = dominantGame;
+      this._bestSec = dominantSec;
       
-      const { bestGame, bestSec } = findMostPlayedGame(this._overallTotals);
-      this._bestGame = bestGame;
-      this._bestSec = bestSec;
+      // Update timestamp of last history fetch
+      this._lastHistoryTimestamp = Date.now();
       
-      // Request an update to render with new data
+      // Request an update to re-render with new data
       this.requestUpdate();
-      return Promise.resolve();
     } catch (error) {
-      return Promise.reject(error);
+      console.error("Calendar Heatmap: Error fetching history data", error);
     }
   }
 
-  /**
-   * Creates data object for the summary view
-   * @returns {Object} Data for summary view
-   * @private
-   */
   _createSummaryData() {
     return {
       overallTotals: this._overallTotals,
-      gameColorMap: this._gameColorMap,
       bestGame: this._bestGame,
-      bestSec: this._bestSec
+      bestSec: this._bestSec,
+      gameColorMap: this._gameColorMap,
+      maxValue: this._maxValue
     };
   }
 
-  /**
-   * Creates data object for a specific day's details
-   * @param {string} date - The date string (YYYY-MM-DD)
-   * @returns {Object} Data for day details view
-   * @private
-   */
   _createDayData(date) {
     return {
-      date: date,
+      date,
       statesObj: this._dailyTotals[date] || {},
-      gameColorMap: this._gameColorMap
+      gameColorMap: this._gameColorMap,
+      maxValue: this._maxValue
     };
   }
 
-  /**
-   * Updates the detail view based on current state
-   * @param {string|null} dateToShow - Date to show details for, or null for summary
-   * @private
-   */
   _updateDetailView(dateToShow) {
     const detailView = this.shadowRoot.querySelector('.detail-view');
     if (!detailView) return;
-
+    
+    // Clear existing content
+    detailView.innerHTML = '';
+    
     if (dateToShow) {
-      // Show specific day details
+      // Show details for the selected date
       const dayData = this._createDayData(dateToShow);
       updateDetailViewWithDayDetails(detailView, dayData);
     } else {
-      // Show overall summary
+      // Show summary data
       const summaryData = this._createSummaryData();
       updateDetailViewWithSummary(detailView, summaryData);
     }
+    
+    // Update selected cell styling
+    this._updateSelectedCellClasses();
   }
 
-  /**
-   * Handles cell hover events
-   * Priority: Hover > Selection > Summary
-   * @param {Object|null} data - Cell data or null when not hovering
-   * @private
-   */
   _onCellHover(data) {
-    const detailView = this.shadowRoot.querySelector('.detail-view');
-    if (!detailView) return;
-
-    if (data) {
-      // Always show details for the hovered cell, regardless of selection
-      updateDetailViewWithDayDetails(detailView, data);
-    } else if (!this._selectedDate) {
-      // If no cell is selected and not hovering, show summary
-      this._updateDetailView(null);
-    } else {
-      // If a cell is selected and we're not hovering, show the selected cell's details
-      this._updateDetailView(this._selectedDate);
-    }
+    // We could implement hover effects here if needed
+    // For now, we'll just use the hover styles in CSS
   }
 
-  /**
-   * Handles cell click events
-   * Toggles selection and updates detail view
-   * @param {Object} data - Cell data
-   * @private
-   */
   _onCellClick(data) {
-    // If clicking the already selected cell, deselect it
-    if (this._selectedDate === data.date) {
+    if (!data) return;
+    
+    const { date } = data;
+    
+    // Toggle selection
+    if (this._selectedDate === date) {
+      // Deselect if already selected
       this._selectedDate = null;
-      this._updateDetailView(null);
     } else {
-      this._selectedDate = data.date;
-      this._updateDetailView(data.date);
+      // Select the new date
+      this._selectedDate = date;
     }
     
-    // Update the selected cell classes
-    this._updateSelectedCellClasses();
-    this.requestUpdate();
+    // Update the detail view
+    this._updateDetailView(this._selectedDate);
   }
 
   _updateSelectedCellClasses() {
-    const heatmapGrid = this.shadowRoot.querySelector('.heatmap-grid');
-    if (!heatmapGrid) return;
-
-    // Remove 'selected' class from all cells
-    const allCells = heatmapGrid.querySelectorAll('.day-cell');
-    allCells.forEach(cell => {
-      cell.classList.remove('selected');
-    });
-    
-    // Add 'selected' class to the selected cell
-    if (this._selectedDate) {
-      const selectedCell = Array.from(allCells).find(cell => 
-        cell._data && cell._data.date === this._selectedDate
-      );
-      if (selectedCell) {
-        selectedCell.classList.add('selected');
+    // Remove selected class from all cells
+    const cells = this.shadowRoot.querySelectorAll('.day-cell');
+    cells.forEach(cell => {
+      if (cell._data && cell._data.date === this._selectedDate) {
+        cell.classList.add('selected');
+      } else {
+        cell.classList.remove('selected');
       }
-    }
+    });
   }
 
   render() {
@@ -333,8 +330,8 @@ class CalendarHeatmapCard extends LitElement {
       return html``;
     }
 
-    // Add dynamic styles based on theme
-    const styleText = getStyles(this._config.theme);
+    // Add dynamic styles
+    const styleText = getStyles();
     const styleElement = document.createElement('style');
     styleElement.textContent = styleText;
 
@@ -397,7 +394,6 @@ class CalendarHeatmapCard extends LitElement {
       this._dailyTotals, 
       this._maxValue, 
       this._gameColorMap, 
-      this._config.theme,
       (data) => this._onCellHover(data),
       (data) => this._onCellClick(data),
       this._selectedDate

@@ -1,4 +1,5 @@
 import { getGameColor } from '../utils/color-utils.js';
+import { isValidDate } from '../utils/date-utils.js';
 
 /**
  * Process history data into daily totals
@@ -11,21 +12,71 @@ export function processDailyTotals(historyData, ignoredStates) {
   let skippedEntries = 0;
   let processedEntries = 0;
   
-  if (historyData && historyData[0]) {
+  // Validate input
+  if (!Array.isArray(historyData) || historyData.length === 0 || !Array.isArray(historyData[0])) {
+    console.warn('Calendar Heatmap: Invalid history data format');
+    return dailyTotals;
+  }
+  
+  // Ensure ignoredStates is an array
+  if (!Array.isArray(ignoredStates)) {
+    ignoredStates = [];
+  }
+  
+  try {
     const entityHistory = historyData[0];
     
     for (let i = 0; i < entityHistory.length - 1; i++) {
       const current = entityHistory[i];
       const next = entityHistory[i + 1];
       
+      // Skip if either entry is missing
+      if (!current || !next) {
+        skippedEntries++;
+        continue;
+      }
+      
       // Handle both standard and compressed formats
       // Compressed format uses 's' for state, 'lu' for last_updated/last_changed
       const currentState = current?.state || current?.s;
-      const currentLastChanged = current?.last_changed || (current?.lu ? new Date(current.lu * 1000).toISOString() : null);
-      const nextLastChanged = next?.last_changed || (next?.lu ? new Date(next.lu * 1000).toISOString() : null);
+      
+      // Get timestamps, handling both formats
+      let currentTimestamp, nextTimestamp;
+      
+      try {
+        if (current.last_changed) {
+          currentTimestamp = new Date(current.last_changed);
+        } else if (current.lu) {
+          currentTimestamp = new Date(current.lu * 1000);
+        } else {
+          // Skip if no timestamp
+          skippedEntries++;
+          continue;
+        }
+        
+        if (next.last_changed) {
+          nextTimestamp = new Date(next.last_changed);
+        } else if (next.lu) {
+          nextTimestamp = new Date(next.lu * 1000);
+        } else {
+          // Skip if no timestamp
+          skippedEntries++;
+          continue;
+        }
+      } catch (error) {
+        console.warn('Calendar Heatmap: Error parsing timestamps', error);
+        skippedEntries++;
+        continue;
+      }
+      
+      // Validate dates
+      if (!isValidDate(currentTimestamp) || !isValidDate(nextTimestamp)) {
+        skippedEntries++;
+        continue;
+      }
       
       // Skip entries with missing required properties
-      if (!currentState || !currentLastChanged || !nextLastChanged) {
+      if (!currentState) {
         skippedEntries++;
         continue;
       }
@@ -34,31 +85,17 @@ export function processDailyTotals(historyData, ignoredStates) {
       
       // Log the first few entries to understand the data format
       if (i < 5) {
-        console.log('Calendar Heatmap: Entry', i, 'state:', currentState, 'last_changed:', currentLastChanged);
+        console.log('Calendar Heatmap: Entry', i, 'state:', currentState, 'timestamp:', currentTimestamp);
       }
       
-      // Log why an entry is being skipped due to ignored states
+      // Skip ignored states
       if (ignoredStates.includes(stateLower)) {
         skippedEntries++;
         continue;
       }
       
-      // Ensure last_changed exists
-      if (!currentLastChanged) {
-        skippedEntries++;
-        continue;
-      }
-      
-      const startTime = new Date(currentLastChanged);
-      const endTime = new Date(nextLastChanged);
-      
-      // Skip invalid dates
-      if (isNaN(startTime.getTime()) || isNaN(endTime.getTime())) {
-        skippedEntries++;
-        continue;
-      }
-      
-      const diffSeconds = (endTime - startTime) / 1000;
+      // Calculate time difference
+      const diffSeconds = (nextTimestamp - currentTimestamp) / 1000;
       
       // Skip negative or extremely large time differences (more than a day)
       if (diffSeconds <= 0 || diffSeconds > 86400) {
@@ -66,17 +103,26 @@ export function processDailyTotals(historyData, ignoredStates) {
         continue;
       }
       
-      const dayStr = startTime.toISOString().split("T")[0];
+      // Get the date string (YYYY-MM-DD)
+      const dayStr = currentTimestamp.toISOString().split("T")[0];
       
+      // Initialize the day if needed
       if (!dailyTotals[dayStr]) {
         dailyTotals[dayStr] = {};
       }
       
+      // Add the seconds to the state's total
       dailyTotals[dayStr][currentState] =
         (dailyTotals[dayStr][currentState] || 0) + diffSeconds;
       
       processedEntries++;
     }
+    
+    // Log processing summary
+    console.log(`Calendar Heatmap: Processed ${processedEntries} entries, skipped ${skippedEntries} entries`);
+    
+  } catch (error) {
+    console.error('Calendar Heatmap: Error processing history data', error);
   }
   
   return dailyTotals;
@@ -100,23 +146,18 @@ export function calculateMaxValue(dailyTotals) {
 }
 
 /**
- * Build a mapping of games to colors
- * @param {Object} dailyTotals - Daily totals by state
- * @returns {Object} Map of game names to colors
+ * Build a mapping of games/states to colors
+ * @param {Array} states - Array of unique state names
+ * @returns {Object} Map of state names to colors
  */
-export function buildGameColorMap(dailyTotals) {
-  // Extract unique game names
-  let gameSet = new Set();
-  for (const day in dailyTotals) {
-    for (const game in dailyTotals[day]) {
-      gameSet.add(game);
-    }
-  }
+export function buildGameColorMap(states) {
+  // Create a Set to ensure uniqueness
+  const uniqueStates = new Set(states);
   
   // Create color mapping
-  let gameColorMap = {};
-  Array.from(gameSet).forEach(game => {
-    gameColorMap[game] = getGameColor(game);
+  const gameColorMap = {};
+  Array.from(uniqueStates).forEach(state => {
+    gameColorMap[state] = getGameColor(state);
   });
   
   return gameColorMap;

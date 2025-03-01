@@ -4,7 +4,7 @@
  * This module provides utility functions for color manipulation and generation.
  */
 
-import { MATERIAL_COLORS, THEME_COLORS } from '../constants.js';
+import { MATERIAL_COLORS, CSS_VARIABLES } from '../constants.js';
 
 /**
  * Generates a consistent color for a given string (e.g., game name)
@@ -33,19 +33,23 @@ export function getGameColor(name) {
 }
 
 /**
- * Adjusts a color's intensity based on a factor and theme
- * For dark theme: blends between black (0) and the color (1)
- * For light theme: blends between white (0) and the color (1)
+ * Adjusts a color's intensity based on a factor
+ * Blends between the no-data color (0) and the color (1)
+ * Automatically adapts to light/dark themes via CSS variables
  * 
  * @param {string} hex - Hex color code (with or without #)
  * @param {number} factor - Intensity factor between 0 and 1
- * @param {string} theme - Theme ('dark' or 'light')
  * @returns {string} Adjusted color as RGB string
  */
-export function adjustColor(hex, factor, theme = 'dark') {
+export function adjustColor(hex, factor) {
   // Validate inputs
   if (!hex || typeof hex !== 'string') {
-    return theme === 'dark' ? 'rgb(0, 0, 0)' : 'rgb(255, 255, 255)';
+    return CSS_VARIABLES.noDataColor;
+  }
+  
+  // If the color is a CSS variable, return it directly
+  if (hex.startsWith('var(')) {
+    return hex;
   }
   
   // Clamp factor between 0 and 1
@@ -67,27 +71,27 @@ export function adjustColor(hex, factor, theme = 'dark') {
     }
   } catch (error) {
     console.warn(`Invalid hex color: ${hex}. Using fallback.`);
-    return theme === 'dark' ? 'rgb(80, 80, 80)' : 'rgb(200, 200, 200)';
+    return CSS_VARIABLES.noDataColor;
   }
   
-  // Get the base color for blending based on theme
-  const baseColor = theme === 'dark' ? 0 : 255;
+  // For very low factors, return the no-data color
+  if (clampedFactor < 0.05) {
+    return CSS_VARIABLES.noDataColor;
+  }
   
-  // Blend between base color and the provided color based on factor
-  r = Math.round(baseColor * (1 - clampedFactor) + r * clampedFactor);
-  g = Math.round(baseColor * (1 - clampedFactor) + g * clampedFactor);
-  b = Math.round(baseColor * (1 - clampedFactor) + b * clampedFactor);
+  // Apply intensity factor directly to RGB values
+  r = Math.round(r * clampedFactor);
+  g = Math.round(g * clampedFactor);
+  b = Math.round(b * clampedFactor);
   
   return `rgb(${r}, ${g}, ${b})`;
 }
 
 /**
- * Gets the no-data color for the current theme
+ * Gets the no-data color from CSS variables
  * 
- * @param {string} theme - Theme ('dark' or 'light')
- * @returns {string} The no-data color for the theme
+ * @returns {string} The no-data color from CSS variables
  */
-export function getNoDataColor(theme = 'dark') {
-  return THEME_COLORS[theme]?.noDataColor || 
-    (theme === 'dark' ? '#757575' : '#E0E0E0');
+export function getNoDataColor() {
+  return CSS_VARIABLES.noDataColor;
 } 

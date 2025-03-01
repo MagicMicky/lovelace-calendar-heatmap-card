@@ -3,14 +3,16 @@ import { CELL_DIMENSIONS } from '../styles.js';
 import { formatDuration } from '../../utils/format-utils.js';
 import { findDominantGame } from '../../data/data-processor.js';
 import { adjustColor } from '../../utils/color-utils.js';
+import { CSS_VARIABLES } from '../../constants.js';
 
 /**
  * Create the heatmap grid component
+ * Uses Home Assistant CSS variables for theming
+ * 
  * @param {Array} weeks - Array of weeks
  * @param {Object} dailyTotals - Daily totals by state
  * @param {number} maxValue - Maximum daily total seconds
  * @param {Object} gameColorMap - Map of game names to colors
- * @param {string} theme - Theme ('dark' or 'light')
  * @param {Function} onCellHover - Callback for cell hover
  * @param {Function} onCellClick - Callback for cell click
  * @param {string|null} selectedDate - Currently selected date (YYYY-MM-DD)
@@ -21,7 +23,6 @@ export function createHeatmapGrid(
   dailyTotals, 
   maxValue, 
   gameColorMap, 
-  theme, 
   onCellHover,
   onCellClick,
   selectedDate
@@ -52,10 +53,9 @@ export function createHeatmapGrid(
         const { dominantGame, dominantSec } = findDominantGame(statesObj);
         
         // Determine cell color
-        const defaultNoDataColor = theme === "dark" ? "#757575" : "#E0E0E0";
-        const baseColor = dominantGame ? gameColorMap[dominantGame] : defaultNoDataColor;
+        const baseColor = dominantGame ? gameColorMap[dominantGame] : CSS_VARIABLES.noDataColor;
         const intensity = maxValue > 0 ? dominantSec / maxValue : 0;
-        const cellColor = adjustColor(baseColor, intensity, theme);
+        const cellColor = adjustColor(baseColor, intensity);
         
         // Create cell with appropriate class
         const classNames = ['day-cell', 'position-relative'];

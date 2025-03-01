@@ -10,28 +10,45 @@ export const CELL_DIMENSIONS = {
 };
 
 /**
- * Style system for the Steam Playtime Card
+ * Style system for the Calendar Heatmap Card
  * 
  * This file contains two complementary styling approaches:
  * 1. CARD_STYLES - CSS string for the overall card styling (injected via <style>)
  * 2. COMPONENT_STYLES - JavaScript objects for individual component styling (applied directly)
+ * 
+ * The styling system uses Home Assistant CSS variables to automatically adapt to the current theme.
  */
 
 /**
  * Get all CSS styles for the card and components
- * @param {string} theme - Theme ('dark' or 'light')
+ * Uses Home Assistant CSS variables to automatically adapt to the current theme
+ * 
  * @returns {string} CSS styles as a string
  */
-export function getStyles(theme) {
-  const primaryTextColor = theme === "light" ? "#333" : "#c9d1d9";
-  const secondaryTextColor = theme === "light" ? "#888" : "#8b949e";
-  const defaultNoDataColor = theme === "light" ? "#E0E0E0" : "#757575";
-  
+export function getStyles() {
   return `
     :host {
-      --heatmap-primary-text: ${primaryTextColor};
-      --heatmap-secondary-text: ${secondaryTextColor};
-      --heatmap-no-data-color: ${defaultNoDataColor};
+      /* Text colors */
+      --heatmap-primary-text: var(--primary-text-color);
+      --heatmap-secondary-text: var(--secondary-text-color);
+      
+      /* Background colors */
+      --heatmap-card-background: var(--ha-card-background, var(--card-background-color));
+      --heatmap-secondary-background: var(--secondary-background-color);
+      
+      /* Heatmap specific colors */
+      --heatmap-no-data-color: var(--calendar-heatmap-no-data-color, var(--disabled-text-color));
+      --heatmap-level-1: var(--calendar-heatmap-level-1, var(--success-color));
+      --heatmap-level-2: var(--calendar-heatmap-level-2, var(--primary-color));
+      --heatmap-level-3: var(--calendar-heatmap-level-3, var(--accent-color));
+      --heatmap-level-4: var(--calendar-heatmap-level-4, var(--state-active-color));
+      
+      /* UI elements */
+      --heatmap-divider-color: var(--divider-color);
+      --heatmap-box-shadow: var(--ha-card-box-shadow, 0 2px 5px rgba(0,0,0,0.26));
+      --heatmap-border-radius: var(--ha-card-border-radius, 4px);
+      
+      /* Layout dimensions */
       --heatmap-cell-width: ${CELL_DIMENSIONS.cellWidth}px;
       --heatmap-cell-margin: ${CELL_DIMENSIONS.cellMargin}px;
       --heatmap-week-col-width: ${CELL_DIMENSIONS.weekColWidth}px;
@@ -39,16 +56,17 @@ export function getStyles(theme) {
     
     /* Card Container */
     ha-card {
-      box-shadow: var(--ha-card-box-shadow, 0 2px 5px rgba(0,0,0,0.26));
-      border-radius: var(--ha-card-border-radius, 4px);
-      color: var(--primary-text-color, ${primaryTextColor});
+      box-shadow: var(--heatmap-box-shadow);
+      border-radius: var(--heatmap-border-radius);
+      color: var(--heatmap-primary-text);
+      background: var(--heatmap-card-background);
       overflow: hidden;
       position: relative;
       padding: 0;
     }
     
     .card-content {
-      font-family: var(--paper-font-common-base, sans-serif);
+      font-family: var(--primary-font-family, var(--paper-font-common-base));
       display: flex;
       flex-wrap: wrap;
       padding: 0;
@@ -61,7 +79,7 @@ export function getStyles(theme) {
       flex: 3;
       min-width: 0;
       padding: 16px 16px 24px 16px;
-      background-color: var(--ha-card-background);
+      background-color: var(--heatmap-card-background);
       min-height: 220px;
       overflow: hidden;
       position: relative;
@@ -75,8 +93,8 @@ export function getStyles(theme) {
       min-width: 200px;
       max-width: 280px;
       padding: 16px 16px 16px 12px;
-      background-color: var(--secondary-background-color, #f7f7f7);
-      border-left: 1px solid var(--divider-color, #CCC);
+      background-color: var(--heatmap-secondary-background);
+      border-left: 1px solid var(--heatmap-divider-color);
       display: flex;
       flex-direction: column;
       overflow: hidden;
@@ -88,12 +106,12 @@ export function getStyles(theme) {
     /* Headers */
     .card-header {
       padding: 8px 0 16px;
-      font-size: 1.4em;
-      font-weight: 500;
-      color: var(--primary-text-color, ${primaryTextColor});
+      font-size: var(--ha-card-header-font-size, 1.4em);
+      font-weight: var(--ha-card-header-font-weight, 500);
+      color: var(--ha-card-header-color, var(--heatmap-primary-text));
       position: sticky;
       left: 0;
-      background-color: var(--ha-card-background);
+      background-color: var(--heatmap-card-background);
       z-index: 1;
       white-space: nowrap;
       overflow: hidden;
@@ -143,7 +161,7 @@ export function getStyles(theme) {
       color: var(--heatmap-primary-text);
       position: sticky;
       left: 36px;
-      background-color: var(--ha-card-background);
+      background-color: var(--heatmap-card-background);
       z-index: 1;
       white-space: nowrap;
       padding-left: 3px;
@@ -166,7 +184,7 @@ export function getStyles(theme) {
       position: sticky;
       left: 0;
       z-index: 2;
-      background-color: var(--ha-card-background);
+      background-color: var(--heatmap-card-background);
       width: 32px;
       text-align: right;
       padding-top: 6px;
@@ -197,185 +215,212 @@ export function getStyles(theme) {
       box-sizing: border-box;
       margin-left: 0;
       margin-right: 0;
-      padding: 0;
     }
     
     .heatmap-grid {
       display: flex;
-      flex-wrap: nowrap;
-      min-width: min-content;
+      flex-direction: row;
       overflow: visible;
-      padding: 3px;
+      margin-top: 0;
+      margin-bottom: 0;
+      padding-top: 6px;
+      box-sizing: border-box;
+    }
+    
+    .heatmap-grid-wrapper {
+      overflow-x: auto;
+      overflow-y: hidden;
+      margin-bottom: 0;
+      padding-bottom: 0;
       box-sizing: border-box;
     }
     
     .week-column {
       display: flex;
       flex-direction: column;
-      margin-right: ${CELL_DIMENSIONS.cellMargin}px;
-      width: ${CELL_DIMENSIONS.cellWidth}px;
-      flex-shrink: 0;
+      width: ${CELL_DIMENSIONS.weekColWidth}px;
       box-sizing: border-box;
     }
     
+    .week-column-spacing {
+      margin-right: 0;
+    }
+    
     .day-cell {
-      width: var(--heatmap-cell-width);
-      height: var(--heatmap-cell-width);
-      margin-bottom: var(--heatmap-cell-margin);
+      width: ${CELL_DIMENSIONS.cellWidth}px;
+      height: ${CELL_DIMENSIONS.cellWidth}px;
+      margin-bottom: ${CELL_DIMENSIONS.cellMargin}px;
       border-radius: 2px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      flex-shrink: 0;
-      position: relative;
       box-sizing: border-box;
+      cursor: pointer;
+      transition: transform 0.1s ease-in-out;
+    }
+    
+    .day-cell:hover {
+      transform: scale(1.15);
+      z-index: 10;
+    }
+    
+    .day-cell.selected {
+      border: 2px solid var(--heatmap-primary-text);
+      box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
     }
     
     .empty-cell {
       width: ${CELL_DIMENSIONS.cellWidth}px;
       height: ${CELL_DIMENSIONS.cellWidth}px;
       margin-bottom: ${CELL_DIMENSIONS.cellMargin}px;
-      flex-shrink: 0;
       box-sizing: border-box;
     }
     
     /* Detail View Components */
-    .content-container {
-      display: flex;
-      flex-direction: column;
+    .detail-content {
       flex: 1;
-      padding-right: 4px;
-      overflow: hidden;
+      overflow-y: auto;
+      overflow-x: hidden;
     }
     
-    .total-element {
-      margin-bottom: 4px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    
-    .dominant-element {
+    .detail-date {
+      font-size: 1.1em;
+      font-weight: 500;
       margin-bottom: 12px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      color: var(--heatmap-primary-text);
     }
     
-    .breakdown-container {
-      flex: 1;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
+    .detail-total {
+      font-size: 0.9em;
+      margin-bottom: 16px;
+      color: var(--heatmap-secondary-text);
     }
     
-    /* Breakdown Items */
-    .breakdown-item {
+    .detail-games {
+      margin-top: 8px;
+    }
+    
+    .game-item {
       display: flex;
       align-items: center;
-      margin-bottom: 4px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      margin-bottom: 8px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--heatmap-divider-color);
     }
     
-    .color-swatch {
+    .game-item:last-child {
+      border-bottom: none;
+    }
+    
+    .game-color {
       width: 12px;
       height: 12px;
+      border-radius: 3px;
       margin-right: 8px;
       flex-shrink: 0;
-      border-radius: 2px;
     }
     
     .game-name {
       flex: 1;
+      font-size: 0.9em;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      min-width: 0;
+      color: var(--heatmap-primary-text);
     }
     
-    /* Responsive Styles */
-    @media (max-width: 500px) {
+    .game-time {
+      font-size: 0.8em;
+      color: var(--heatmap-secondary-text);
+      margin-left: 8px;
+      flex-shrink: 0;
+    }
+    
+    .summary-item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 8px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--heatmap-divider-color);
+    }
+    
+    .summary-item:last-child {
+      border-bottom: none;
+    }
+    
+    .summary-color {
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+      margin-right: 8px;
+      flex-shrink: 0;
+    }
+    
+    .summary-name {
+      flex: 1;
+      font-size: 0.9em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: var(--heatmap-primary-text);
+    }
+    
+    .summary-time {
+      font-size: 0.8em;
+      color: var(--heatmap-secondary-text);
+      margin-left: 8px;
+      flex-shrink: 0;
+    }
+    
+    .summary-percentage {
+      font-size: 0.75em;
+      color: var(--heatmap-secondary-text);
+      margin-left: 4px;
+      flex-shrink: 0;
+    }
+    
+    .no-data-message {
+      color: var(--heatmap-secondary-text);
+      font-style: italic;
+      text-align: center;
+      margin-top: 16px;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 600px) {
       .card-content {
         flex-direction: column;
-      }
-      
-      .heatmap-container {
-        padding-right: 16px;
       }
       
       .detail-view {
         max-width: none;
         border-left: none;
-        border-top: 1px solid var(--divider-color, #CCC);
+        border-top: 1px solid var(--heatmap-divider-color);
       }
     }
-
-    /* Improved hover and selection styles */
-    .day-cell:hover {
-      box-shadow: 0 0 0 2px rgba(var(--rgb-primary-color, 33, 150, 243), 0.5);
-      z-index: 3;
-      transform: scale(1.05);
-    }
-
-    .day-cell.selected {
-      box-shadow: 0 0 0 3px var(--primary-color, #2196F3);
-      z-index: 4;
-      transform: scale(1.1);
+    
+    /* Scrollbar styling */
+    .heatmap-grid-wrapper::-webkit-scrollbar {
+      height: 6px;
     }
     
-    /* Fix for edge cells to prevent halo clipping */
-    .heatmap-grid-wrapper {
-      padding: 3px;
-      overflow: visible !important;
-      position: relative;
-      box-sizing: border-box;
+    .heatmap-grid-wrapper::-webkit-scrollbar-track {
+      background: var(--heatmap-card-background);
     }
     
-    /* Specific styles for edge cells - using transform instead of margin to prevent alignment issues */
-    .day-cell.first-in-row,
-    .day-cell.last-in-row,
-    .day-cell.first-in-column,
-    .day-cell.last-in-column {
-      position: relative;
-      z-index: 2;
+    .heatmap-grid-wrapper::-webkit-scrollbar-thumb {
+      background-color: var(--heatmap-secondary-text);
+      border-radius: 3px;
     }
     
-    /* New classes to replace inline styles */
-    .flex-container {
-      display: flex;
+    .detail-content::-webkit-scrollbar {
+      width: 6px;
     }
     
-    .flex-align-stretch {
-      align-items: stretch;
+    .detail-content::-webkit-scrollbar-track {
+      background: var(--heatmap-secondary-background);
     }
     
-    .flex-align-start {
-      align-items: flex-start;
-    }
-    
-    .flex-column {
-      flex-direction: column;
-    }
-    
-    .grid-container-spacing {
-      margin-top: 2px;
-    }
-    
-    .month-header-spacing {
-      margin-bottom: 2px;
-    }
-    
-    .day-label-spacing {
-      margin-right: 4px;
-    }
-    
-    .week-column-spacing {
-      margin-right: ${CELL_DIMENSIONS.cellMargin}px;
-    }
-    
-    .position-relative {
-      position: relative;
+    .detail-content::-webkit-scrollbar-thumb {
+      background-color: var(--heatmap-secondary-text);
+      border-radius: 3px;
     }
   `;
 }
