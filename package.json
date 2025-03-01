@@ -10,7 +10,9 @@
     "lint": "eslint src/**/*.js",
     "lint:fix": "eslint src/**/*.js --fix",
     "test": "jest",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "semantic-release": "semantic-release",
+    "commitlint": "commitlint --edit"
   },
   "author": "Mickael Goubin",
   "license": "MIT",
@@ -20,9 +22,14 @@
   "devDependencies": {
     "@babel/core": "^7.23.5",
     "@babel/preset-env": "^7.23.5",
+    "@commitlint/cli": "^18.4.3",
+    "@commitlint/config-conventional": "^18.4.3",
     "@rollup/plugin-babel": "^6.0.4",
     "@rollup/plugin-node-resolve": "^15.2.3",
     "@rollup/plugin-terser": "^0.4.4",
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/exec": "^6.0.3",
+    "@semantic-release/git": "^10.0.1",
     "eslint": "^8.55.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-import": "^2.29.0",
@@ -32,7 +39,8 @@
     "lint-staged": "^15.2.0",
     "prettier": "^3.1.0",
     "rollup": "^3.29.5",
-    "rollup-plugin-postcss": "^4.0.2"
+    "rollup-plugin-postcss": "^4.0.2",
+    "semantic-release": "^22.0.12"
   },
   "repository": {
     "type": "git",
