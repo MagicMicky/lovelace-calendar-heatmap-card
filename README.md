@@ -24,7 +24,6 @@ A custom Lovelace card for Home Assistant that visualizes entity activity data a
 - 🗓️ Configurable week start day (Monday or Sunday)
 - 📏 Automatic sizing of heatmap based on available space
 - 🎲 Configurable limit on number of games displayed
-- 🛡️ Robust error handling for improved reliability
 
 ## Installation
 
@@ -82,58 +81,9 @@ entity: sensor.steam_activity
 title: Steam Gaming Activity
 ```
 
-#### Advanced Configuration
-```yaml
-type: custom:calendar-heatmap-card
-entity: sensor.steam_activity
-title: Steam Gaming Activity
-days_to_show: 180
-ignored_states:
-  - idle
-  - offline
-  - ""
-refresh_interval: 600
-start_day_of_week: sunday
-include_unknown: true
-```
-
-## New in Version 3.3.0
-
-### Automatic Sizing
-
-The card now automatically adjusts the number of weeks displayed based on the available space in your dashboard. This ensures optimal visibility regardless of your screen size or dashboard layout. The heatmap will show between 4 and 52 weeks, depending on the available width.
-
-### Limited Card Height
-
-The card now has a fixed height to ensure consistent appearance across dashboards. This prevents the card from becoming too tall when there's a lot of data.
-
-### Game Display Limit
-
-The detail view now shows a limited number of games by default (4), with a "Show all" button to reveal the complete list. This improves readability and performance, especially for users with many different games or states.
-
 ## Theming
 
 The Calendar Heatmap Card features advanced theme-aware color handling that automatically adapts to your Home Assistant theme. The card will detect whether you're using a light or dark theme and adjust colors accordingly for optimal visibility.
-
-### Custom Theme Variables
-
-You can customize the appearance of the heatmap by adding these variables to your Home Assistant theme:
-
-```yaml
-calendar-heatmap-no-data-color: "#ebedf0"  # Color for days with no data
-calendar-heatmap-level-1: "#c6e48b"        # Color for lowest activity level
-calendar-heatmap-level-2: "#7bc96f"        # Color for low-medium activity level
-calendar-heatmap-level-3: "#239a3b"        # Color for medium-high activity level
-calendar-heatmap-level-4: "#196127"        # Color for highest activity level
-```
-
-If these variables are not defined, the card will fall back to using Home Assistant's standard theme colors:
-
-- `--disabled-text-color` for no data
-- `--success-color` for level 1
-- `--primary-color` for level 2
-- `--accent-color` for level 3
-- `--state-active-color` for level 4
 
 ### Theme Detection
 
@@ -210,29 +160,6 @@ This gives you a beautiful visualization of your gaming habits over time, showin
 
 ![Discord Gaming Activity Example](https://raw.githubusercontent.com/MagicMicky/lovelace-calendar-heatmap-card/main/docs/images/calendar-heatmap.png)
 *Example of Discord gaming activity visualization*
-
-## Troubleshooting
-
-### Common Issues
-
-#### No Data Showing
-- Ensure your entity has historical data in Home Assistant
-- Check that the entity states aren't all in the `ignored_states` list
-- Verify that `days_to_show` isn't set too low
-
-#### Colors Not Matching Theme
-- Make sure you're using a recent version of Home Assistant
-- Try adding the custom theme variables mentioned in the Theming section
-- Check if your theme properly defines the fallback variables
-
-#### Performance Issues
-- Try reducing `days_to_show` to display fewer days
-- Increase `refresh_interval` to reduce update frequency
-
-#### Card Size Issues
-- In version 3.3.0+, the card automatically adjusts to available space
-- If the card appears too small, try placing it in a wider column in your dashboard
-- The card height is now fixed for better UI integration
 
 ## Development
 
