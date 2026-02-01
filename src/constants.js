@@ -39,6 +39,10 @@ export const DEFAULT_CONFIG = {
   ignored_states: ['unknown', 'idle', 'offline', ''],
   refresh_interval: 10 * 60, // 10 minutes in seconds
   start_day_of_week: 'monday', // can be "monday" or "sunday"
+  // Binary mode options for habit tracking
+  binary_mode: false, // Enable binary/habit tracking mode
+  binary_on_state: null, // Specific state to track as "on" (null = any non-ignored state)
+  binary_color: '#4CAF50', // Color for active days in binary mode
 };
 
 /**

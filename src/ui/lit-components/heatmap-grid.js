@@ -6,6 +6,7 @@ import {
   getNoDataColorWithOpacity,
 } from '../../utils/color-utils.js';
 import { CELL_DIMENSIONS } from '../cell-dimensions.js';
+import { DEFAULT_CONFIG } from '../../constants.js';
 
 /**
  * HeatmapGrid component
@@ -19,6 +20,10 @@ export class HeatmapGrid extends LitElement {
       maxValue: { type: Number },
       gameColorMap: { type: Object },
       selectedDate: { type: String },
+      // Binary mode properties
+      binaryMode: { type: Boolean },
+      binaryTotals: { type: Object },
+      binaryColor: { type: String },
     };
   }
 
@@ -107,6 +112,10 @@ export class HeatmapGrid extends LitElement {
     this.maxValue = 0;
     this.gameColorMap = {};
     this.selectedDate = null;
+    // Binary mode properties
+    this.binaryMode = false;
+    this.binaryTotals = {};
+    this.binaryColor = DEFAULT_CONFIG.binary_color;
   }
 
   /**
@@ -268,19 +277,30 @@ export class HeatmapGrid extends LitElement {
       0,
     );
 
-    // Find dominant game for this day
-    const { dominantGame, dominantSec } = findDominantGame(statesObj);
+    let cellColor;
+    let intensity;
+    let tooltipText;
 
-    // Calculate intensity
-    const intensity = this._calculateIntensity(dominantSec);
-
-    // Determine cell color
-    const cellColor = this._calculateCellColor(
-      dominantGame,
-      dominantSec,
-      intensity,
-      dayStr,
-    );
+    if (this.binaryMode) {
+      // Binary mode rendering
+      const isActive = this.binaryTotals[dayStr] === true;
+      intensity = isActive ? 1.0 : 0;
+      cellColor = isActive
+        ? adjustColor(this.binaryColor, 1.0)
+        : getNoDataColorWithOpacity(this.selectedDate === dayStr ? 0.5 : 0.3);
+      tooltipText = `${date.toLocaleDateString()} - ${isActive ? 'Active' : 'No activity'}`;
+    } else {
+      // Standard duration-based rendering
+      const { dominantGame, dominantSec } = findDominantGame(statesObj);
+      intensity = this._calculateIntensity(dominantSec);
+      cellColor = this._calculateCellColor(
+        dominantGame,
+        dominantSec,
+        intensity,
+        dayStr,
+      );
+      tooltipText = `${date.toLocaleDateString()} - ${sumSeconds > 0 ? formatDuration(sumSeconds) : 'No activity'}`;
+    }
 
     // Add a data attribute for the intensity value - useful for debugging and testing
     const intensityPercent = Math.round(intensity * 100);
@@ -302,15 +322,15 @@ export class HeatmapGrid extends LitElement {
       date: dayStr,
       statesObj,
       gameColorMap: this.gameColorMap,
+      binaryMode: this.binaryMode,
+      isActive: this.binaryMode ? this.binaryTotals[dayStr] === true : null,
     };
 
     return html`
       <div
         class=${classNames.join(' ')}
         style="background-color: ${cellColor};"
-        title="${date.toLocaleDateString()} - ${sumSeconds > 0
-          ? formatDuration(sumSeconds)
-          : 'No activity'}"
+        title="${tooltipText}"
         data-intensity="${intensityPercent}"
         @click=${() => this._handleCellClick(cellData)}
         @mouseenter=${() => this._handleCellHover(cellData)}
