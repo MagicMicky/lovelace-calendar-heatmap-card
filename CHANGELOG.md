@@ -1,3 +1,10 @@
+# [3.5.0](https://github.com/MagicMicky/lovelace-calendar-heatmap-card/compare/v3.4.1...v3.5.0) (2026-02-01)
+
+
+### Features
+
+* add binary/habit-tracker mode ([f5d1039](https://github.com/MagicMicky/lovelace-calendar-heatmap-card/commit/f5d1039eef0f72793aa8adab6f5d8a94b16edada)), closes [#9](https://github.com/MagicMicky/lovelace-calendar-heatmap-card/issues/9) [#4CAF50](https://github.com/MagicMicky/lovelace-calendar-heatmap-card/issues/4CAF50)
+
 ## [3.4.1](https://github.com/MagicMicky/lovelace-calendar-heatmap-card/compare/v3.4.0...v3.4.1) (2025-03-01)
 
 
