@@ -15,6 +15,7 @@ A custom Lovelace card for Home Assistant that visualizes entity activity data a
 
 - 📅 Displays historical activity data on a calendar grid
 - 🎮 Perfect for tracking game activity, device usage, or any time-based data
+- ✅ **Binary/Habit tracking mode** for simple on/off tracking (e.g., gym attendance)
 - 🎨 Advanced theme-aware colors that automatically adapt to light/dark modes
 - 🌈 Intelligent color intensity scaling for better visual differentiation
 - 🔄 Auto-refreshes data at configurable intervals
@@ -71,6 +72,9 @@ title: My Gaming Activity
 | `refresh_interval` | number | 300 | Refresh interval in seconds |
 | `start_day_of_week` | string | "monday" | Day to start the week on ("monday" or "sunday") |
 | `include_unknown` | boolean | false | Whether to include "unknown" state in calculations |
+| `binary_mode` | boolean | false | Enable binary/habit tracking mode (shows active/inactive instead of duration) |
+| `binary_on_state` | string | null | Specific state to track as "on" in binary mode (null = any non-ignored state) |
+| `binary_color` | string | "#4CAF50" | Color for active days in binary mode |
 
 ### Example Configurations
 
@@ -80,6 +84,23 @@ type: custom:calendar-heatmap-card
 entity: sensor.steam_activity
 title: Steam Gaming Activity
 ```
+
+#### Binary/Habit Tracking Mode
+Perfect for tracking habits like gym attendance, medication, or any yes/no daily activity:
+
+```yaml
+type: custom:calendar-heatmap-card
+entity: input_boolean.gym_tracker
+title: Gym Activity
+binary_mode: true
+binary_on_state: "on"
+binary_color: "#4CAF50"
+```
+
+In binary mode:
+- Days are shown as either active (colored) or inactive (gray)
+- The detail panel shows "X / Y days (Z% active)" instead of duration
+- Clicking a day shows "Active" or "No activity" with a list of states that occurred
 
 ## Theming
 
