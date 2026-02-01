@@ -15,6 +15,9 @@ export class DetailView extends LitElement {
       showSummary: { type: Boolean },
       _showAllGames: { type: Boolean, state: true },
       _maxGamesToShow: { type: Number, state: true },
+      // Binary mode properties
+      binaryMode: { type: Boolean },
+      binaryStats: { type: Object },
     };
   }
 
@@ -178,6 +181,9 @@ export class DetailView extends LitElement {
     this.showSummary = true;
     this._showAllGames = false;
     this._maxGamesToShow = 4; // Show 4 games by default
+    // Binary mode properties
+    this.binaryMode = false;
+    this.binaryStats = null;
   }
 
   _toggleShowAllGames() {
@@ -201,6 +207,75 @@ export class DetailView extends LitElement {
         <div class="time">${formatDuration(secs)}</div>
       </div>
     `;
+  }
+
+  /**
+   * Render binary mode content (summary or day view)
+   * @returns {TemplateResult} Lit-html template result
+   * @private
+   */
+  _renderBinaryContent() {
+    if (this.showSummary) {
+      // Binary summary view
+      if (!this.binaryStats) {
+        return html`
+          <div class="content-area">
+            <div class="no-data">No data available</div>
+          </div>
+        `;
+      }
+
+      const { activeDays, totalDays, percentage } = this.binaryStats;
+
+      return html`
+        <div class="content-area">
+          <div class="header">Activity Summary</div>
+          <div class="total">
+            ${activeDays} / ${totalDays} days (${percentage}% active)
+          </div>
+        </div>
+      `;
+    } else {
+      // Binary day view
+      if (!this.dayData) {
+        return html`
+          <div class="content-area">
+            <div class="no-data">No data available</div>
+          </div>
+        `;
+      }
+
+      const { date, statesObj = {}, isActive } = this.dayData;
+      const dateObj = date ? new Date(date) : new Date();
+      const states = Object.keys(statesObj);
+
+      return html`
+        <div class="content-area">
+          <div class="date">
+            ${dateObj.toLocaleDateString(undefined, {
+              weekday: 'long',
+              month: 'short',
+              day: 'numeric',
+            })}
+          </div>
+          <div class="total">${isActive ? 'Active' : 'No activity'}</div>
+
+          ${isActive && states.length > 0
+            ? html`
+                <div class="games-list">
+                  ${states.map(
+                    (state) => html`
+                      <div class="game-item">
+                        <div class="name">${state}</div>
+                      </div>
+                    `,
+                  )}
+                </div>
+              `
+            : ''}
+        </div>
+      `;
+    }
   }
 
   _renderContent() {
@@ -324,6 +399,10 @@ export class DetailView extends LitElement {
   }
 
   render() {
+    // Use binary mode rendering if enabled
+    if (this.binaryMode) {
+      return this._renderBinaryContent();
+    }
     return this._renderContent();
   }
 }

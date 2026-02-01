@@ -8,6 +8,8 @@ import {
   buildGameColorMap,
   calculateOverallTotals,
   findMostPlayedGame,
+  processBinaryTotals,
+  calculateBinaryStats,
 } from './data/data-processor.js';
 import {
   getHeatmapStartDate,
@@ -41,6 +43,9 @@ class CalendarHeatmapCard extends LitElement {
       _bestSec: { type: Number },
       _isLoading: { type: Boolean },
       _containerWidth: { type: Number },
+      // Binary mode state
+      _binaryTotals: { type: Object },
+      _binaryStats: { type: Object },
     };
   }
 
@@ -264,6 +269,9 @@ class CalendarHeatmapCard extends LitElement {
     this._isLoading = true;
     this._containerWidth = 0; // Initialize container width
     this._config = {}; // Initialize config
+    // Binary mode state
+    this._binaryTotals = {};
+    this._binaryStats = null;
 
     // Bind the resize handler to this instance
     this._handleResize = this._handleResize.bind(this);
@@ -598,6 +606,20 @@ class CalendarHeatmapCard extends LitElement {
         );
         this._bestGame = dominantGame;
         this._bestSec = dominantSec;
+
+        // Process binary mode data if enabled
+        if (this._config.binary_mode) {
+          this._binaryTotals = processBinaryTotals(
+            this._dailyTotals,
+            this._config.binary_on_state,
+          );
+          // Calculate total days in the displayed range
+          const totalDays = maxWeeks * 7;
+          this._binaryStats = calculateBinaryStats(
+            this._binaryTotals,
+            totalDays,
+          );
+        }
       }
     } catch (error) {
       console.error('Calendar Heatmap: Error fetching history data', error);
@@ -619,12 +641,19 @@ class CalendarHeatmapCard extends LitElement {
   }
 
   _createDayData(date) {
-    return {
+    const dayData = {
       date,
       statesObj: this._dailyTotals && date ? this._dailyTotals[date] || {} : {},
       gameColorMap: this._gameColorMap || {},
       maxValue: this._maxValue || 0,
     };
+
+    // Add binary mode info if enabled
+    if (this._config.binary_mode) {
+      dayData.isActive = this._binaryTotals[date] === true;
+    }
+
+    return dayData;
   }
 
   /**
@@ -789,6 +818,9 @@ class CalendarHeatmapCard extends LitElement {
                   .maxValue=${this._maxValue || 0}
                   .gameColorMap=${this._gameColorMap || {}}
                   .selectedDate=${this._selectedDate}
+                  .binaryMode=${this._config.binary_mode || false}
+                  .binaryTotals=${this._binaryTotals || {}}
+                  .binaryColor=${this._config.binary_color || '#4CAF50'}
                   @cell-click=${this._onCellClick}
                   @cell-hover=${this._onCellHover}
                 ></heatmap-grid>
@@ -803,6 +835,8 @@ class CalendarHeatmapCard extends LitElement {
               .dayData=${dayData}
               .summaryData=${summaryData}
               .showSummary=${!this._selectedDate}
+              .binaryMode=${this._config.binary_mode || false}
+              .binaryStats=${this._binaryStats}
             ></detail-view>
           </div>
         </div>

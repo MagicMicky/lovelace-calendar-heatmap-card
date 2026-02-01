@@ -250,3 +250,50 @@ export function getColorIndex(seconds, maxValue) {
   if (fraction > 0.25) return 2;
   return 1;
 }
+
+/**
+ * Process daily totals into binary (active/inactive) data
+ * @param {Object} dailyTotals - Daily totals by state from processDailyTotals()
+ * @param {string|null} onState - Specific state to track as "on" (null = any non-empty state)
+ * @returns {Object} Object with date keys and boolean values { "2024-01-15": true, ... }
+ */
+export function processBinaryTotals(dailyTotals, onState = null) {
+  const binaryTotals = {};
+
+  for (const dayStr in dailyTotals) {
+    const statesObj = dailyTotals[dayStr];
+
+    if (onState) {
+      // Check for specific state (case-insensitive)
+      const onStateLower = onState.toLowerCase();
+      const hasTargetState = Object.keys(statesObj).some(
+        (state) => state.toLowerCase() === onStateLower,
+      );
+      binaryTotals[dayStr] = hasTargetState;
+    } else {
+      // Any non-empty day counts as active
+      const hasAnyActivity = Object.keys(statesObj).length > 0;
+      binaryTotals[dayStr] = hasAnyActivity;
+    }
+  }
+
+  return binaryTotals;
+}
+
+/**
+ * Calculate statistics for binary mode
+ * @param {Object} binaryTotals - Binary totals from processBinaryTotals()
+ * @param {number} totalDays - Total number of days in the displayed range
+ * @returns {Object} Statistics { activeDays, totalDays, percentage }
+ */
+export function calculateBinaryStats(binaryTotals, totalDays) {
+  const activeDays = Object.values(binaryTotals).filter(Boolean).length;
+  const percentage =
+    totalDays > 0 ? Math.round((activeDays / totalDays) * 100) : 0;
+
+  return {
+    activeDays,
+    totalDays,
+    percentage,
+  };
+}
