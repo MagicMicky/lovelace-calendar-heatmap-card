@@ -36,6 +36,7 @@ export const MATERIAL_COLORS = [
  */
 export const DEFAULT_CONFIG = {
   title: 'Game Activity',
+  show_title: true, // false hides the card title
   ignored_states: ['unknown', 'idle', 'offline', ''],
   refresh_interval: 10 * 60, // 10 minutes in seconds
   start_day_of_week: 'monday', // can be "monday" or "sunday"

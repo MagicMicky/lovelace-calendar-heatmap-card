@@ -805,15 +805,19 @@ class CalendarHeatmapCard extends LitElement {
       </div>`
       : html``;
 
+    const cardHeader = this._config.show_title
+      ? html`<div class="card-header">
+          ${this._config.title || 'Calendar Heatmap'}
+        </div>`
+      : html``;
+
     return html`
       <ha-card>
         ${loadingIndicator}
         <div class="card-content ${this._isLoading ? 'loading' : ''}">
           <!-- Left Panel: Heatmap Container -->
           <div class="heatmap-container">
-            <div class="card-header">
-              ${this._config.title || 'Calendar Heatmap'}
-            </div>
+            ${cardHeader}
 
             <!-- Month Header -->
             <month-header .monthGroups=${monthGroups}></month-header>
