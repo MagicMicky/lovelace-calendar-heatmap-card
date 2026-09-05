@@ -5,6 +5,11 @@ on:
     branches:
       - main
 
+# Never let two releases run at once - semantic-release is not safe to race.
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   release:
     name: Release
@@ -32,19 +37,13 @@ jobs:
         run: npm run lint
         continue-on-error: true
 
-      - name: Build
+      # Build once here purely to fail fast on a broken build. The artifact that
+      # actually ships is rebuilt inside semantic-release's prepare step, after
+      # scripts/update-version.js has stamped the new version into the sources.
+      - name: Build (validation only)
         run: npm run build
-
-      - name: Create gzip version
-        run: |
-          if [ -f dist/calendar-heatmap-card.js ]; then
-            gzip -c dist/calendar-heatmap-card.js > dist/calendar-heatmap-card.js.gz
-          else
-            echo "Warning: dist/calendar-heatmap-card.js not found, skipping gzip"
-            exit 0
-          fi
 
       - name: Semantic Release
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
-        run: npx semantic-release 
+        run: npx semantic-release
