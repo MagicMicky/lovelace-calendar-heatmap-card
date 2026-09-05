@@ -287,7 +287,7 @@ export class HeatmapGrid extends LitElement {
       intensity = isActive ? 1.0 : 0;
       cellColor = isActive
         ? adjustColor(this.binaryColor, 1.0)
-        : getNoDataColorWithOpacity(this.selectedDate === dayStr ? 0.5 : 0.3);
+        : getNoDataColorWithOpacity(this.selectedDate === dayStr ? 0.5 : 0.2);
       tooltipText = `${date.toLocaleDateString()} - ${isActive ? 'Active' : 'No activity'}`;
     } else {
       // Standard duration-based rendering
