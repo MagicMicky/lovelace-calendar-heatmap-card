@@ -34,7 +34,7 @@ export class MonthHeader extends LitElement {
       }
 
       .month-label {
-        text-align: center;
+        text-align: left;
         display: inline-block;
         overflow: hidden;
         box-sizing: border-box;

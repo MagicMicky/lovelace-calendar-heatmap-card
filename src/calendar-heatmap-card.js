@@ -771,11 +771,12 @@ class CalendarHeatmapCard extends LitElement {
       this._config.start_day_of_week,
     );
     const weeks = buildWeeksArray(startDate);
-    const monthGroups = groupWeeksByMonth(weeks);
 
     // Calculate visible weeks based on available space
     // Ensure the current week is always visible by taking the most recent weeks
     const visibleWeeks = weeks.slice(-maxWeeks);
+
+    const monthGroups = groupWeeksByMonth(visibleWeeks);
 
     // Create day data or summary data based on selection
     const dayData = this._selectedDate
