@@ -169,7 +169,7 @@ class CalendarHeatmapCard extends LitElement {
       }
 
       .card-header {
-        padding: 8px 0 8px;
+        padding: 0;
         font-size: var(--ha-card-header-font-size, 1.4em);
         font-weight: var(--ha-card-header-font-weight, 500);
         color: var(--ha-card-header-color, var(--primary-text-color));
@@ -180,7 +180,7 @@ class CalendarHeatmapCard extends LitElement {
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-        margin-bottom: 4px;
+        margin-bottom: 8px;
       }
 
       .grid-container {
