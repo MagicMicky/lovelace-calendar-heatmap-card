@@ -1,3 +1,22 @@
+# [3.6.0](https://github.com/MagicMicky/lovelace-calendar-heatmap-card/compare/v3.5.0...v3.6.0) (2026-09-05)
+
+
+### Bug Fixes
+
+* align month headers with the visible week range ([67fbcd4](https://github.com/MagicMicky/lovelace-calendar-heatmap-card/commit/67fbcd4b04614b0c46a93f15636426f992d2c09c)), closes [#16](https://github.com/MagicMicky/lovelace-calendar-heatmap-card/issues/16)
+* align month labels with the month each column mostly belongs to ([170ebd0](https://github.com/MagicMicky/lovelace-calendar-heatmap-card/commit/170ebd00ac83111c2666a7dcb4dda90a716b9616))
+* attribute history to the local day it actually falls in ([ef1915c](https://github.com/MagicMicky/lovelace-calendar-heatmap-card/commit/ef1915cf6056060b849507d1e76ad2eaaac9e0db)), closes [#14](https://github.com/MagicMicky/lovelace-calendar-heatmap-card/issues/14) [#13](https://github.com/MagicMicky/lovelace-calendar-heatmap-card/issues/13) [#14](https://github.com/MagicMicky/lovelace-calendar-heatmap-card/issues/14)
+* parse detail view dates as local time ([d32abaf](https://github.com/MagicMicky/lovelace-calendar-heatmap-card/commit/d32abaf1fd8e202dcd6f902ff9c3389c941ee8bb)), closes [#15](https://github.com/MagicMicky/lovelace-calendar-heatmap-card/issues/15)
+* reduce inactive binary cell opacity to 0.2 ([c7035b4](https://github.com/MagicMicky/lovelace-calendar-heatmap-card/commit/c7035b434a6565042bca725c2d1e94ae457344ea)), closes [#20](https://github.com/MagicMicky/lovelace-calendar-heatmap-card/issues/20)
+* remove extra card header padding ([63a14ed](https://github.com/MagicMicky/lovelace-calendar-heatmap-card/commit/63a14ed00471b0e9e1760f6bcbb7d8a14be342a4)), closes [#18](https://github.com/MagicMicky/lovelace-calendar-heatmap-card/issues/18)
+
+
+### Features
+
+* add show_title option to hide the card title ([cfeedcb](https://github.com/MagicMicky/lovelace-calendar-heatmap-card/commit/cfeedcb0e44109744d047e68312fcc7ad0171b09)), closes [#19](https://github.com/MagicMicky/lovelace-calendar-heatmap-card/issues/19)
+* integrate contributor PRs [#13](https://github.com/MagicMicky/lovelace-calendar-heatmap-card/issues/13)-[#20](https://github.com/MagicMicky/lovelace-calendar-heatmap-card/issues/20) with fixes and release pipeline repairs ([e24fc98](https://github.com/MagicMicky/lovelace-calendar-heatmap-card/commit/e24fc98e7e722a2b2288d50db5c71a094c2f3220)), closes [#22](https://github.com/MagicMicky/lovelace-calendar-heatmap-card/issues/22)
+* tighten the card layout when the title is hidden ([cdb0484](https://github.com/MagicMicky/lovelace-calendar-heatmap-card/commit/cdb0484d6cee9721c1808e5cb34a5085754fe957)), closes [#19](https://github.com/MagicMicky/lovelace-calendar-heatmap-card/issues/19)
+
 # [3.5.0](https://github.com/MagicMicky/lovelace-calendar-heatmap-card/compare/v3.4.1...v3.5.0) (2026-02-01)
 
 
