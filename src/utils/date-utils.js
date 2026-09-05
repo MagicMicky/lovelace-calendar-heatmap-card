@@ -1,4 +1,22 @@
 /**
+ * Format a date as the YYYY-MM-DD key used throughout the card, in the
+ * viewer's local timezone.
+ *
+ * Deliberately not toISOString(): that converts to UTC first, so for any
+ * timezone east of Greenwich a local date renders as the previous day. Every
+ * producer and consumer of a day key must agree, or cells look up totals that
+ * were filed under the neighbouring day.
+ *
+ * @param {Date} date - Date to format
+ * @returns {string} Local date as YYYY-MM-DD
+ */
+export function toLocalDateKey(date) {
+  const pad = (value) => String(value).padStart(2, '0');
+
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+
+/**
  * Validates a date object
  * @param {Date} date - Date to validate
  * @returns {boolean} True if date is valid, false otherwise

@@ -5,6 +5,7 @@ import {
   adjustColor,
   getNoDataColorWithOpacity,
 } from '../../utils/color-utils.js';
+import { toLocalDateKey } from '../../utils/date-utils.js';
 import { CELL_DIMENSIONS } from '../cell-dimensions.js';
 import { DEFAULT_CONFIG } from '../../constants.js';
 
@@ -270,7 +271,7 @@ export class HeatmapGrid extends LitElement {
    * @private
    */
   _renderDayCell(date, weekIndex, dayIndex) {
-    const dayStr = date.toISOString().split('T')[0];
+    const dayStr = toLocalDateKey(date);
     const statesObj = this.dailyTotals[dayStr] || {};
     const sumSeconds = Object.values(statesObj).reduce(
       (acc, val) => acc + val,

@@ -1,5 +1,5 @@
 import { getGameColor } from '../utils/color-utils.js';
-import { isValidDate } from '../utils/date-utils.js';
+import { isValidDate, toLocalDateKey } from '../utils/date-utils.js';
 
 /**
  * Process history data into daily totals
@@ -30,9 +30,18 @@ export function processDailyTotals(historyData, ignoredStates) {
   try {
     const entityHistory = historyData[0];
 
-    for (let i = 0; i < entityHistory.length - 1; i++) {
+    const now = new Date();
+
+    for (let i = 0; i < entityHistory.length; i++) {
       const current = entityHistory[i];
-      const next = entityHistory[i + 1];
+
+      // The last entry has no successor, but the state it reports is still in
+      // effect, so run it to now. Without this the current state contributes
+      // nothing and today reads as inactive.
+      const isLastEntry = i === entityHistory.length - 1;
+      const next = isLastEntry
+        ? { ...current, last_changed: now.toISOString() }
+        : entityHistory[i + 1];
 
       // Skip if either entry is missing
       if (!current || !next) {
@@ -109,23 +118,48 @@ export function processDailyTotals(historyData, ignoredStates) {
       // Calculate time difference
       const diffSeconds = (nextTimestamp - currentTimestamp) / 1000;
 
-      // Skip negative or extremely large time differences (more than a day)
-      if (diffSeconds <= 0 || diffSeconds > 86400) {
+      // Skip negative time differences. A span longer than a day is no longer
+      // discarded: a state that holds for a week is real, and dropping it left
+      // those days blank.
+      if (diffSeconds <= 0) {
         skippedEntries++;
         continue;
       }
 
-      // Get the date string (YYYY-MM-DD)
-      const dayStr = currentTimestamp.toISOString().split('T')[0];
+      // Walk the local days the span covers, crediting each with the seconds
+      // that actually fall inside it. Attributing the whole span to the start
+      // day both over-counted that day and left the days it ran through empty.
+      let dayStart = new Date(
+        currentTimestamp.getFullYear(),
+        currentTimestamp.getMonth(),
+        currentTimestamp.getDate(),
+      );
 
-      // Initialize the day if needed
-      if (!dailyTotals[dayStr]) {
-        dailyTotals[dayStr] = {};
+      while (dayStart < nextTimestamp) {
+        // setDate() rather than +86400s, so DST transitions stay correct.
+        const nextDayStart = new Date(dayStart);
+        nextDayStart.setDate(nextDayStart.getDate() + 1);
+
+        const from = dayStart > currentTimestamp ? dayStart : currentTimestamp;
+        const to = nextDayStart < nextTimestamp ? nextDayStart : nextTimestamp;
+        const secondsInDay = (to - from) / 1000;
+
+        // A span ending exactly at (or a hair past) local midnight leaves a
+        // zero-length sliver on the following day. Recording it would create
+        // an entry that binary mode counts as an active day.
+        if (secondsInDay > 0) {
+          const dayStr = toLocalDateKey(dayStart);
+
+          if (!dailyTotals[dayStr]) {
+            dailyTotals[dayStr] = {};
+          }
+
+          dailyTotals[dayStr][currentState] =
+            (dailyTotals[dayStr][currentState] || 0) + secondsInDay;
+        }
+
+        dayStart = nextDayStart;
       }
-
-      // Add the seconds to the state's total
-      dailyTotals[dayStr][currentState] =
-        (dailyTotals[dayStr][currentState] || 0) + diffSeconds;
 
       processedEntries++;
     }
