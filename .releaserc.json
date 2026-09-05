@@ -1,5 +1,7 @@
 {
-  "branches": ["main"],
+  "branches": [
+    "main"
+  ],
   "plugins": [
     "@semantic-release/commit-analyzer",
     "@semantic-release/release-notes-generator",
@@ -12,7 +14,7 @@
     [
       "@semantic-release/exec",
       {
-        "prepareCmd": "./scripts/update-version.js ${nextRelease.version}"
+        "prepareCmd": "./scripts/update-version.js ${nextRelease.version} && npm run build && gzip -kf dist/calendar-heatmap-card.js"
       }
     ],
     [
@@ -24,7 +26,15 @@
     [
       "@semantic-release/git",
       {
-        "assets": ["package.json", "CHANGELOG.md", "manifest.json", "src/constants.js"],
+        "assets": [
+          "package.json",
+          "CHANGELOG.md",
+          "manifest.json",
+          "src/constants.js",
+          "dist/calendar-heatmap-card.js",
+          "dist/calendar-heatmap-card.js.gz",
+          "dist/calendar-heatmap-card.js.map"
+        ],
         "message": "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
       }
     ],
@@ -32,10 +42,17 @@
       "@semantic-release/github",
       {
         "assets": [
-          {"path": "dist/calendar-heatmap-card.js", "label": "Calendar Heatmap Card (js)"},
-          {"path": "dist/calendar-heatmap-card.js.gz", "label": "Calendar Heatmap Card (js.gz)", "missing": true}
+          {
+            "path": "dist/calendar-heatmap-card.js",
+            "label": "Calendar Heatmap Card (js)"
+          },
+          {
+            "path": "dist/calendar-heatmap-card.js.gz",
+            "label": "Calendar Heatmap Card (js.gz)",
+            "missing": true
+          }
         ]
       }
     ]
   ]
-} 
+}

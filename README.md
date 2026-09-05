@@ -76,6 +76,7 @@ title: My Gaming Activity
 | `binary_on_state`   | string  | null                               | Specific state to track as "on" in binary mode (null = any non-ignored state) |
 | `binary_color`      | string  | "#4CAF50"                          | Color for active days in binary mode                                          |
 | `show_detail_view`  | boolean | true                               | Enable the detail view                                                        |
+| `show_title`        | boolean | true                               | Show the card title (set false to hide it)                                    |
 
 ### Example Configurations
 
@@ -102,6 +103,7 @@ In binary mode:
 - Days are shown as either active (colored) or inactive (gray)
 - The detail panel shows "X / Y days (Z% active)" instead of duration
 - Clicking a day shows "Active" or "No activity" with a list of states that occurred
+- To avoid automatic modification of the color intensity, set `binary_color` to one of Home Assistant's built in `var()` colors, such as `var(--green-color)`
 
 ## Theming
 

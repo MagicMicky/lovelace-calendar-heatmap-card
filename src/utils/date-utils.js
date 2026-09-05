@@ -1,4 +1,22 @@
 /**
+ * Format a date as the YYYY-MM-DD key used throughout the card, in the
+ * viewer's local timezone.
+ *
+ * Deliberately not toISOString(): that converts to UTC first, so for any
+ * timezone east of Greenwich a local date renders as the previous day. Every
+ * producer and consumer of a day key must agree, or cells look up totals that
+ * were filed under the neighbouring day.
+ *
+ * @param {Date} date - Date to format
+ * @returns {string} Local date as YYYY-MM-DD
+ */
+export function toLocalDateKey(date) {
+  const pad = (value) => String(value).padStart(2, '0');
+
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+
+/**
  * Validates a date object
  * @param {Date} date - Date to validate
  * @returns {boolean} True if date is valid, false otherwise
@@ -169,16 +187,37 @@ export function groupWeeksByMonth(weeks) {
       return;
     }
 
-    // Use the first day of the week
-    const firstDay = week[0];
+    // Attribute the column to whichever month owns most of its days.
+    //
+    // Keying on the first day (the Monday) pushed the label a column to the
+    // right of its own month whenever a month started mid-week; keying on the
+    // last day pushed it a column to the left, putting e.g. "Aug" over a
+    // column holding five July days. The majority is what the column reads as.
+    // Ties keep the earlier month, since days are visited in order.
+    const days = week.filter((day) => isValidDate(day));
 
-    // Validate the date
-    if (!isValidDate(firstDay)) {
+    if (days.length === 0) {
       return;
     }
 
-    const month = firstDay.getMonth();
-    const monthName = firstDay.toLocaleString('default', { month: 'short' });
+    const dayCounts = new Map();
+    days.forEach((day) => {
+      const m = day.getMonth();
+      dayCounts.set(m, (dayCounts.get(m) || 0) + 1);
+    });
+
+    let refDay = days[0];
+    let bestCount = -1;
+    days.forEach((day) => {
+      const count = dayCounts.get(day.getMonth());
+      if (count > bestCount) {
+        bestCount = count;
+        refDay = day;
+      }
+    });
+
+    const month = refDay.getMonth();
+    const monthName = refDay.toLocaleString('default', { month: 'short' });
 
     if (!currentGroup) {
       currentGroup = { month, monthName, count: 1 };
