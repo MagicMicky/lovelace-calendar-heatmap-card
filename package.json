@@ -18,6 +18,7 @@
   "author": "Mickael Goubin",
   "license": "MIT",
   "dependencies": {
+    "date-fns": "^4.4.0",
     "lit": "^2.7.0"
   },
   "devDependencies": {

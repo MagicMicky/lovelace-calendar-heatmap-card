@@ -1,6 +1,7 @@
 import { LitElement, html, css } from 'lit';
 import { formatDuration } from '../../utils/format-utils.js';
 import { adjustColor } from '../../utils/color-utils.js';
+import { parseISO } from 'date-fns';
 
 /**
  * DetailView component
@@ -246,7 +247,7 @@ export class DetailView extends LitElement {
       }
 
       const { date, statesObj = {}, isActive } = this.dayData;
-      const dateObj = date ? new Date(date) : new Date();
+      const dateObj = date ? parseISO(date) : new Date();
       const states = Object.keys(statesObj);
 
       return html`
@@ -367,7 +368,7 @@ export class DetailView extends LitElement {
     } else {
       // Day details view data
       const { date, statesObj = {}, gameColorMap = {} } = this.dayData || {};
-      const dateObj = date ? new Date(date) : new Date();
+      const dateObj = date ? parseISO(date) : new Date();
       const totalSeconds = statesObj
         ? Object.values(statesObj).reduce((a, b) => a + b, 0)
         : 0;
