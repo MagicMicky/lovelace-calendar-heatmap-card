@@ -30,11 +30,10 @@ export class MonthHeader extends LitElement {
         background-color: var(--card-background-color);
         z-index: 1;
         white-space: nowrap;
-        padding-left: 3px;
       }
 
       .month-label {
-        text-align: left;
+        text-align: center;
         display: inline-block;
         overflow: hidden;
         box-sizing: border-box;
