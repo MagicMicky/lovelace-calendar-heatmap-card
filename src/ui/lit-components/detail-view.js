@@ -15,7 +15,7 @@ export class DetailView extends LitElement {
       summaryData: { type: Object },
       showSummary: { type: Boolean },
       _showAllGames: { type: Boolean, state: true },
-      _maxGamesToShow: { type: Number, state: true },
+      maxGamesToShow: { type: Number },
       // Binary mode properties
       binaryMode: { type: Boolean },
       binaryStats: { type: Object },
@@ -181,7 +181,9 @@ export class DetailView extends LitElement {
     this.summaryData = null;
     this.showSummary = true;
     this._showAllGames = false;
-    this._maxGamesToShow = 4; // Show 4 games by default
+    // Rows shown before "show all". The card lowers this when the title is
+    // hidden, because the card is then one row shorter.
+    this.maxGamesToShow = 4;
     // Binary mode properties
     this.binaryMode = false;
     this.binaryStats = null;
@@ -298,18 +300,18 @@ export class DetailView extends LitElement {
     // Determine which games to show
     const gamesToShow = this._showAllGames
       ? games
-      : games.slice(0, this._maxGamesToShow);
-    const hasMoreGames = games.length > this._maxGamesToShow;
+      : games.slice(0, this.maxGamesToShow);
+    const hasMoreGames = games.length > this.maxGamesToShow;
 
     // Calculate additional games info
     const additionalGamesTime =
       hasMoreGames && !this._showAllGames
         ? games
-            .slice(this._maxGamesToShow)
+            .slice(this.maxGamesToShow)
             .reduce((total, [_, secs]) => total + secs, 0)
         : 0;
     const additionalGamesCount = hasMoreGames
-      ? games.length - this._maxGamesToShow
+      ? games.length - this.maxGamesToShow
       : 0;
 
     return html`

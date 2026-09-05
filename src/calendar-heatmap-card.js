@@ -98,6 +98,16 @@ class CalendarHeatmapCard extends LitElement {
 
         /* Height variable for card */
         --heatmap-card-height: 235px;
+
+        /*
+         * Height reclaimed when the title is hidden. Deliberately one summary
+         * row (28px: 15px content + 6px padding + 1px border + 6px margin)
+         * rather than the title block's ~36px, so the detail panel's usable
+         * height changes by exactly one row and maxGamesToShow can drop by
+         * exactly one without the list starting to scroll. The spare ~8px
+         * goes to the heatmap, where the centred grid absorbs it.
+         */
+        --heatmap-titleless-reduction: 28px;
       }
 
       ha-card {
@@ -181,6 +191,17 @@ class CalendarHeatmapCard extends LitElement {
         overflow: hidden;
         text-overflow: ellipsis;
         margin-bottom: 8px;
+      }
+
+      /* Without a title the card is shorter, so centre the grid in the space. */
+      ha-card.no-title .grid-container {
+        align-items: center;
+      }
+
+      ha-card.no-title {
+        height: calc(
+          var(--heatmap-card-height) - var(--heatmap-titleless-reduction)
+        );
       }
 
       .grid-container {
@@ -801,6 +822,7 @@ class CalendarHeatmapCard extends LitElement {
           .showSummary=${!this._selectedDate}
           .binaryMode=${this._config.binary_mode || false}
           .binaryStats=${this._binaryStats}
+          .maxGamesToShow=${this._config.show_title === false ? 3 : 4}
         ></detail-view>
       </div>`
       : html``;
@@ -812,7 +834,7 @@ class CalendarHeatmapCard extends LitElement {
       : html``;
 
     return html`
-      <ha-card>
+      <ha-card class=${this._config.show_title === false ? 'no-title' : ''}>
         ${loadingIndicator}
         <div class="card-content ${this._isLoading ? 'loading' : ''}">
           <!-- Left Panel: Heatmap Container -->

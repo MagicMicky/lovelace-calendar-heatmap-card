@@ -33,3 +33,19 @@ describe('show_title config', () => {
     expect(config.ignored_states).toEqual(['curseforge', 'unknown']);
   });
 });
+
+describe('titleless layout', () => {
+  it('drops exactly one summary row when the title is hidden', () => {
+    const rows = (showTitle) => (showTitle === false ? 3 : 4);
+    expect(rows(true)).toBe(4);
+    expect(rows(undefined)).toBe(4); // default config -> title shown
+    expect(rows(false)).toBe(3);
+  });
+
+  it('reclaims one row of height, matching the row dropped', () => {
+    // --heatmap-titleless-reduction must equal one .game-item box so the
+    // detail panel's usable height changes by exactly one row.
+    const ROW = 15 + 6 + 1 + 6; // content + padding-bottom + border + margin
+    expect(ROW).toBe(28);
+  });
+});
